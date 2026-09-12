@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +14,7 @@ type Claim struct {
 	User          User           `gorm:"foreignKey:UserID" json:"applicant"`
 	ReviewerID    *uint          `json:"reviewerId"`
 	ClaimsReason  string         `gorm:"size:500" json:"claimReason"`
-	ProofImages   string         `gorm:"type:text" json:"proofImages"`
+	ProofImages   datatypes.JSON `json:"proofImages"`
 	ContactType   string         `gorm:"size:16" json:"-"` // phone | wechat | qq | email
 	ContactValue  string         `gorm:"size:100" json:"contactValue"`
 	PendingStatus string         `gorm:"size:16;default:pending;index" json:"status"` // pending | approved | rejected | cancelled

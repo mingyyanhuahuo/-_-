@@ -8,6 +8,7 @@ type ItemType struct {
 	Icon      string    `gorm:"size:200" json:"icon"`
 	Sort      uint      `json:"sort"`
 	Enabled   bool      `gorm:"default:true" json:"enabled"`
+	ItemCount int64     `gorm:"-" json:"itemCount"`
 	CreatedAt time.Time `json:"-"`
 	UpdatedAt time.Time `json:"-"`
 }

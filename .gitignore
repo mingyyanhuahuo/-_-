@@ -1,0 +1,6 @@
+logs/
+*.exe
+ma
+*.test
+config/config.yaml
+docs/

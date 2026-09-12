@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -18,11 +19,12 @@ type Item struct {
 	Title        string         `gorm:"size:50" json:"title"`
 	Description  string         `gorm:"size:1000" json:"description"`
 	Location     string         `gorm:"size:100" json:"location"`
-	Images       string         `gorm:"type:text" json:"images"`
-	LostTime     time.Time      `json:"lostTime"`
+	Images       datatypes.JSON `json:"images"`
+	LostTime     time.Time      `gorm:"index" json:"lostTime"`
 	ContactType  string         `gorm:"size:16" json:"contactType"` // phone | wechat | qq | email
 	ContactValue string         `gorm:"size:100" json:"contactValue"`
 	Status       string         `gorm:"size:16;default:pending;index" json:"status"` // pending | approved | rejected | claimed | closed
+	CloseRemark  string         `gorm:"size:200" json:"-"`
 	RejectReason string         `gorm:"size:200" json:"rejectedReason"`
 	ClaimCount   uint           `json:"claimCount"`
 	ViewCount    uint           `json:"viewCount"`
