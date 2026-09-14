@@ -27,7 +27,7 @@ func Init(secret string) error {
 type Claims struct {
 	UserID uint   `json:"user_id"`
 	Role   string `json:"role"`
-	Type   string `json:"type"` //"access" or "refresh"
+	Type   string `json:"type"`
 	jwt.RegisteredClaims
 }
 
@@ -44,6 +44,7 @@ func GenerateAccessToken(userID uint, role string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secrectKey))
 }
+
 func GenerateRefreshToken(userID uint, role string) (string, error) {
 	claims := Claims{
 		UserID: userID,
@@ -57,6 +58,7 @@ func GenerateRefreshToken(userID uint, role string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secrectKey))
 }
+
 func ParseToken(tokenString string, tokenType TokenType) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {

@@ -9,6 +9,7 @@ type BizError struct {
 func (e *BizError) Error() string {
 	return e.Message
 }
+
 func New(httpStatus int, code int, msg string) *BizError {
 	return &BizError{
 		HttpStatus: httpStatus,
