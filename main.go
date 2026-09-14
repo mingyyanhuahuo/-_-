@@ -4,13 +4,12 @@ import (
 	"log"
 	"lostfound/config"
 	"lostfound/dao"
-	"lostfound/middleware"
 	"lostfound/model"
 	"lostfound/pkg/jwtutil"
 	"lostfound/pkg/logger"
 	"lostfound/pkg/redisdb"
+	"lostfound/router"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -44,9 +43,5 @@ func main() {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
 
-	r := gin.Default()
-	r.Use(middleware.AccessLog(), middleware.ErrorMiddleware())
-	port := config.GetConfig().Server.Port
-	log.Printf("服务启动，监听端口: %s", port)
-	r.Run(":" + port)
+	router.InitRouter()
 }

@@ -1,6 +1,13 @@
-package handle
+package handler
 
-import "time"
+import (
+	"lostfound/pkg/errcode"
+	"lostfound/pkg/logger"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
 
 type ItemCreateRequest struct {
 	Type         string    `json:"type" binding:"required,oneof=lost found"`
@@ -47,4 +54,9 @@ type AnnouncementRequest struct {
 	Content   string     `json:"content" binding:"required,max=5000"`
 	IsTop     bool       `json:"isTop"`
 	PublishAt *time.Time `json:"publishAt"`
+}
+
+func BindError(c *gin.Context, err error) {
+	logger.Logger.Warn("参数校验失败", zap.Error(err))
+	c.Error(errcode.New(400, 10000, "请求参数错误"))
 }
