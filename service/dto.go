@@ -5,18 +5,40 @@ import (
 	"time"
 )
 
+const (
+	defaultPageSize = 10
+	maxPageSize     = 50
+)
+
+// ________________________________________
 type UserBrief struct {
 	UserId   uint   `json:"userId"`
 	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
 }
 
+// ________________________________________
+// announcement
 type PageMeta struct {
 	Total    int64 `json:"total"`
 	Page     int   `json:"page"`
 	PageSize int   `json:"pageSize"`
 }
 
+type Announcement struct {
+	Title     string     `json:"title"`
+	Content   string     `json:"content"`
+	IsTop     bool       `json:"isTop"`
+	PublishAt *time.Time `json:"publishAt"`
+}
+
+type AnnouncementsList struct {
+	PageMeta
+	Announcements []model.Announcement `json:"list"`
+}
+
+// ________________________________________
+// item and claim
 type ItemBrief struct {
 	ItemId       uint      `json:"itemId"`
 	Type         string    `json:"type"`
