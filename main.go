@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"lostfound/api/user"
 	"lostfound/config"
 	"lostfound/dao"
 	"lostfound/middleware"
@@ -49,6 +48,5 @@ func main() {
 	r.Use(middleware.AccessLog(), middleware.ErrorMiddleware())
 	port := config.GetConfig().Server.Port
 	log.Printf("服务启动，监听端口: %s", port)
-	user.UserRouter(r)
 	r.Run(":" + port)
 }
