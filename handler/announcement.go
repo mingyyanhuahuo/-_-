@@ -13,7 +13,7 @@ import (
 func GenerateAnnouncement(c *gin.Context) {
 	var req dto.AnnouncementRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(errcode.ErrBadRequest)
+		BindError(c, err)
 		return
 	}
 	announcement, err := service.GenerateAnnouncement(int(c.GetUint("id")), &req)
@@ -45,7 +45,7 @@ func UpdateAnnouncement(c *gin.Context) {
 	}
 	var req dto.AnnouncementRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(errcode.ErrBadRequest)
+		BindError(c, err)
 		return
 	}
 	announcement, err := service.UpdateAnnouncement(uint(id), &req)
