@@ -1,13 +1,16 @@
 package service
 
 import (
+	"errors"
 	"lostfound/dao"
+	"lostfound/dto"
 	"lostfound/model"
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/logger"
 	"time"
 
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 func normalizePageNum(page, pageSize int) (int, int) {
@@ -21,7 +24,7 @@ func normalizePageNum(page, pageSize int) (int, int) {
 	}
 	return page, pageSize
 }
-func ListAnnouncements(role, status string, page, pageSize int) (*AnnouncementsList, error) {
+func ListAnnouncements(role, status string, page, pageSize int) (*dto.AnnouncementsList, error) {
 	publishedOnly := (role != model.RoleSysAdmin)
 	if publishedOnly {
 		status = model.AnnouncementStatusPublished
@@ -38,18 +41,18 @@ func ListAnnouncements(role, status string, page, pageSize int) (*AnnouncementsL
 	if announcements == nil {
 		announcements = []model.Announcement{}
 	}
-	pageMeta := PageMeta{
+	pageMeta := dto.PageMeta{
 		Total:    total,
 		Page:     page,
 		PageSize: pageSize,
 	}
 
-	return &AnnouncementsList{
+	return &dto.AnnouncementsList{
 		PageMeta:      pageMeta,
 		Announcements: announcements,
 	}, nil
 }
-func GenerateAnnouncement(userID int, req *Announcement) (*model.Announcement, error) {
+func GenerateAnnouncement(userID int, req *dto.AnnouncementRequest) (*model.Announcement, error) {
 	now := time.Now()
 	announcement := &model.Announcement{
 		PublisherID:        uint(userID),
@@ -75,9 +78,7 @@ func GenerateAnnouncement(userID int, req *Announcement) (*model.Announcement, e
 	return announcement, nil
 }
 
-
-
-func GetAnnouncement(id uint,role string) (*model.Announcement, error) {
+func GetAnnouncement(id uint, role string) (*model.Announcement, error) {
 	announcement, err := dao.GetAnnouncementByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -92,8 +93,9 @@ func GetAnnouncement(id uint,role string) (*model.Announcement, error) {
 	return announcement, nil
 }
 
-func UpdateAnnouncement(id uint, req *Announcement) (*model.Announcement, error) {
-	if _, err := GetAnnouncementByID(id); err != nil {
+func UpdateAnnouncement(id uint, req *dto.AnnouncementRequest) (*model.Announcement, error) {
+	announcement, err := dao.GetAnnouncementByID(id)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errcode.ErrAnnouncementNotFound
 		}
@@ -104,16 +106,69 @@ func UpdateAnnouncement(id uint, req *Announcement) (*model.Announcement, error)
 	publishAt := req.PublishAt
 	if publishAt == nil {
 		publishAt = &now
+	} else if publishAt.After(now) {
+		announcement.AnnouncementStatus = model.AnnouncementStatusDraft
 	}
-	fields := map[string]any(
-		"title":	req.Title,
-		"content": req.Content,
-		"is_top": req.IsTop,
+	fields := map[string]any{
+		"title":      req.Title,
+		"content":    req.Content,
+		"is_top":     req.IsTop,
 		"publish_at": publishAt,
-	)
+	}
 	if err := dao.UpdateAnnouncement(id, fields); err != nil {
 		logger.Logger.Error("更新公告失败", zap.Uint("announcementId", id), zap.Error(err))
 		return nil, errcode.ErrInternalServer
+	}
+	announcement.Title = req.Title
+	announcement.Content = req.Content
+	announcement.IsTop = req.IsTop
+	announcement.PublishAt = publishAt
+	return announcement, nil
+}
+func ChangeAnnouncementStatus(id uint, action string) error {
+	announcement, err := dao.GetAnnouncementByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errcode.ErrAnnouncementNotFound
+		}
+		logger.Logger.Error("查询公告失败", zap.Uint("announcementId", id), zap.Error(err))
+		return errcode.ErrInternalServer
+	}
+	var newStatus string
+	switch action {
+	case "publish":
+		if announcement.AnnouncementStatus == model.AnnouncementStatusPublished {
+			return errcode.ErrAnnouncementStatusNotAllow
+		}
+		newStatus = model.AnnouncementStatusPublished
+	case "offline":
+		if announcement.AnnouncementStatus != model.AnnouncementStatusPublished {
+			return errcode.ErrAnnouncementStatusNotAllow
+		}
+		newStatus = model.AnnouncementStatusOffline
+	default:
+		return errcode.ErrBadRequest
+	}
+
+	if err := dao.UpdateAnnouncement(id, map[string]any{"announcement_status": newStatus}); err != nil {
+		logger.Logger.Error("更新公告状态失败", zap.Uint("announcementId", id), zap.Error(err))
+		return errcode.ErrInternalServer
+	}
+
+	return nil
+}
+func DeleteAnnouncement(id uint) error {
+	_, err := dao.GetAnnouncementByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errcode.ErrAnnouncementNotFound
+		}
+		logger.Logger.Error("查询公告失败", zap.Uint("announcementId", id), zap.Error(err))
+		return errcode.ErrInternalServer
+	}
+	if err := dao.DeleteAnnouncement(id); err != nil {
+		logger.Logger.Error("删除公告失败", zap.Uint("announcementId", id), zap.Error(err))
+		return errcode.ErrInternalServer
 	}
 	return nil
 }

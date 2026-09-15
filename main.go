@@ -9,6 +9,8 @@ import (
 	"lostfound/pkg/jwtutil"
 	"lostfound/pkg/logger"
 	"lostfound/pkg/redisdb"
+	"lostfound/router"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -24,6 +26,20 @@ func initDB() *gorm.DB {
 	}
 	return db
 }
+func startPublishScheduler() {
+	tricker := time.NewTicker(1 * time.Minute)
+	defer tricker.Stop()
+	for range tricker.C {
+		n, err := dao.PublishSchedulerAnnouncement()
+		if err != nil {
+			logger.Logger.Error("定时发布公告失败", zap.Error(err))
+			continue
+		}
+		if n > 0 {
+			logger.Logger.Info("定时发布公告成功", zap.Int("count", int(n)))
+		}
+	}
+}
 func main() {
 	logger.InitLogger()
 	logger.Logger.Info("日志服务启动", zap.String("port", config.GetConfig().Server.Port))
@@ -38,7 +54,7 @@ func main() {
 		log.Fatalf("数据库迁移失败: %v", err)
 	}
 	dao.InitDB(db)
-
+	go startPublishScheduler()
 	redisdb.InitRedis()
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
@@ -47,6 +63,8 @@ func main() {
 	r := gin.Default()
 	r.Use(middleware.AccessLog())
 	r.Use(middleware.ErrorMiddleware())
+	r.Use(middleware.JWTAuthMiddleware())
+	router.InitRouter(r)
 	port := config.GetConfig().Server.Port
 	log.Printf("服务启动，监听端口: %s", port)
 	r.Run(":" + port)
