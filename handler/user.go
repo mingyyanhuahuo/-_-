@@ -2,6 +2,7 @@ package handler
 
 import (
 	"lostfound/model"
+	"lostfound/pkg/errcode"
 	"lostfound/pkg/response"
 	"lostfound/service"
 
@@ -11,7 +12,7 @@ import (
 func Register(c *gin.Context) {
 	var body model.RegisterBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		BindError(c, err)
+		c.Error(errcode.ErrBadRequest)
 		return
 	}
 

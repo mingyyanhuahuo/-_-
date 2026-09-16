@@ -30,7 +30,9 @@ var (
 	ErrUserPwdWrong        = &BizError{400, 2002, "用户名或密码错误"}
 	ErrOldPwdWrong         = &BizError{400, 2004, "原密码错误"}
 	ErrStudentIDRegistered = &BizError{400, 2005, "学号已被注册"}
-	ErrNoBindContact       = &BizError{400, 2006, "该用户未绑定手机号与邮箱"}
+	ErrPhoneRegistered     = &BizError{400, 2006, "手机号已被注册"}
+	ErrEmailRegistered     = &BizError{400, 2007, "邮箱已被注册"}
+	ErrNoBindContact       = &BizError{400, 2008, "该用户未绑定手机号与邮箱"}
 
 	ErrLostInfoNotFound   = &BizError{400, 3001, "发布信息不存在"}
 	ErrInfoStatusNotAllow = &BizError{400, 3002, "信息状态不允许该操作"}
