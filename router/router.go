@@ -13,6 +13,7 @@ func InitRouter(r *gin.Engine) {
 
 	auth := api.Group("/auth")
 	auth.POST("/register", handler.Register)
+	auth.POST("/login", handler.Login)
 
 	api.GET("/announcements", handler.AnnouncementList)
 	api.GET("/announcements/:announcementId", handler.GetAnnouncement)

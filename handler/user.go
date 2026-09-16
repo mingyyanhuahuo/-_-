@@ -21,6 +21,26 @@ func Register(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+
 	response.OK(c, gin.H{"userId": userId})
 
+}
+
+func Login(c *gin.Context) {
+	var Body struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&Body); err != nil {
+		c.Error(errcode.ErrBadRequest)
+		return
+	}
+
+	token, err := service.Login(Body.Username, Body.Password)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.OK(c, gin.H{"token": token})
 }

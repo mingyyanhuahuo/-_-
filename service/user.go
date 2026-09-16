@@ -5,6 +5,7 @@ import (
 	"lostfound/model"
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/hashpassword"
+	"lostfound/pkg/jwtutil"
 	"time"
 )
 
@@ -47,4 +48,23 @@ func Register(body *model.RegisterBody) (int64, error) {
 	}
 
 	return int64(user.ID), nil
+}
+
+func Login(username, password string) (string, error) {
+	user, err := dao.OnlyUsername(username)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", errcode.ErrUserPwdWrong
+	}
+
+	if err := hashpassword.CheckHash(user.PassHash, password); err != nil {
+		return "", errcode.ErrUserPwdWrong
+	} else {
+		if access, err := jwtutil.GenerateAccessToken(user.ID, user.Role); err != nil {
+
+		}
+	}
+
 }
