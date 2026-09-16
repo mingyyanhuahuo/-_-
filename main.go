@@ -10,6 +10,7 @@ import (
 	"lostfound/pkg/logger"
 	"lostfound/pkg/redisdb"
 	"lostfound/router"
+	"lostfound/service"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -59,8 +60,9 @@ func main() {
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
-
+	uploadDir := service.UpLoadDir()
 	r := gin.Default()
+	r.Static("/uploads", uploadDir)
 	r.Use(middleware.AccessLog())
 	r.Use(middleware.ErrorMiddleware())
 	r.Use(middleware.JWTAuthMiddleware())
