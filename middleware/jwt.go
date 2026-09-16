@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"errors"
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/jwtutil"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWTAuthMiddleware() gin.HandlerFunc {
@@ -24,7 +26,11 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		}
 		claims, err := jwtutil.ParseToken(token, jwtutil.TokenTypeAccess)
 		if err != nil {
-			c.Error(errcode.ErrUnauthorized)
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				c.Error(errcode.ErrTokenExpired)
+			} else {
+				c.Error(errcode.ErrUnauthorized)
+			}
 			c.Abort()
 			return
 		}

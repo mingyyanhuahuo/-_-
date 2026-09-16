@@ -9,7 +9,6 @@ import (
 type Announcement struct {
 	ID                 uint           `json:"announcementId"`
 	PublisherID        uint           `gorm:"index" json:"publisherId"`
-	Publisher          User           `gorm:"foreignKey:PublisherID" json:"-"`
 	Title              string         `gorm:"size:100" json:"title"`
 	Content            string         `gorm:"type:text" json:"content"`
 	IsTop              bool           `json:"isTop"`
