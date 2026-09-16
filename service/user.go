@@ -50,21 +50,45 @@ func Register(body *model.RegisterBody) (int64, error) {
 	return int64(user.ID), nil
 }
 
-func Login(username, password string) (string, error) {
+func Login(username, password string) (model.LoginResponse, error) {
+	var LoginReponse model.LoginResponse
 	user, err := dao.OnlyUsername(username)
 	if err != nil {
-		return "", err
+		return LoginReponse, err
 	}
 	if user == nil {
-		return "", errcode.ErrUserPwdWrong
+		return LoginReponse, errcode.ErrUserPwdWrong
 	}
 
 	if err := hashpassword.CheckHash(user.PassHash, password); err != nil {
-		return "", errcode.ErrUserPwdWrong
+		return LoginReponse, errcode.ErrUserPwdWrong
 	} else {
-		if access, err := jwtutil.GenerateAccessToken(user.ID, user.Role); err != nil {
-
+		access, err := jwtutil.GenerateAccessToken(user.ID, user.Role)
+		if err != nil {
+			return LoginReponse, err
 		}
+		refresh, err := jwtutil.GenerateRefreshToken(user.ID, user.Role)
+		if err != nil {
+			return LoginReponse, err
+		}
+
+		LoginReponse = model.LoginResponse{
+			AccessToken:  access,
+			RefreshToken: refresh,
+			ExpiresIn:    7200,
+			UserInfo: model.UserInfo{
+				UserID:     user.ID,
+				UserName:   user.UserName,
+				NickName:   user.NickName,
+				Avatar:     user.Avatar,
+				StudentNo:  user.StudentNo,
+				Phone:      user.Phone,
+				Email:      user.Email,
+				Role:       user.Role,
+				CreateTime: user.CreatedAt,
+			},
+		}
+		return LoginReponse, nil
 	}
 
 }

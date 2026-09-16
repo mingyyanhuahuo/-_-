@@ -2,7 +2,6 @@ package handler
 
 import (
 	"lostfound/model"
-	"lostfound/pkg/errcode"
 	"lostfound/pkg/response"
 	"lostfound/service"
 
@@ -12,7 +11,7 @@ import (
 func Register(c *gin.Context) {
 	var body model.RegisterBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.Error(errcode.ErrBadRequest)
+		BindError(c, err)
 		return
 	}
 
@@ -32,15 +31,15 @@ func Login(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&Body); err != nil {
-		c.Error(errcode.ErrBadRequest)
+		BindError(c, err)
 		return
 	}
 
-	token, err := service.Login(Body.Username, Body.Password)
+	LR, err := service.Login(Body.Username, Body.Password)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	response.OK(c, gin.H{"token": token})
+	response.OK(c, LR)
 }

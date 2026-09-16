@@ -28,3 +28,22 @@ type RegisterBody struct {
 	Phone     string `json:"phone" binding:"required,len=11"`
 	Email     string `json:"email" binding:"required,email"`
 }
+
+type LoginResponse struct {
+	AccessToken  string   `json:"accessToken"`
+	RefreshToken string   `json:"refreshToken"`
+	ExpiresIn    int64    `json:"expiresIn"`
+	UserInfo     UserInfo `json:"userInfo"`
+}
+
+type UserInfo struct {
+	UserID     uint      `json:"userId"`
+	UserName   string    `json:"username" binding:"required,min=3,max=20"`
+	NickName   string    `json:"nickname" binding:"required,min=2,max=20"`
+	Avatar     string    `gorm:"size:255" json:"avatar"`
+	StudentNo  string    `gorm:"size:12;uniqueIndex" json:"studentNo"`
+	Phone      string    `gorm:"size:11" json:"phone"`
+	Email      string    `gorm:"size:64" json:"email"`
+	Role       string    `gorm:"size:16;default:student" json:"role"`
+	CreateTime time.Time `json:"createTime"`
+}
