@@ -90,7 +90,7 @@ type ItemStatusResponse struct {
 	ItemId uint   `json:"itemId"`
 	Status string `json:"status"`
 }
-type ItemList struct {
+type ItemsList struct {
 	PageMeta
 	Items []ItemBrief `json:"list"`
 }

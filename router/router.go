@@ -13,11 +13,19 @@ func InitRouter(r *gin.Engine) {
 	api.POST("/auth/register", handler.Register)
 	api.GET("/announcements", handler.AnnouncementList)
 	api.GET("/announcements/:announcementId", handler.GetAnnouncement)
+	api.GET("/items/:itemId", handler.GetItemDetail)
+	api.GET("/items", handler.ListItems)
 
 	login := api.Group("", middleware.RequireAuthMiddleware())
 	{
 		login.POST("/files/upload", handler.UploadFile)
 		login.DELETE("/files/:fileId", handler.DeleteFile)
+
+		login.POST("/items", handler.GenerateItem)
+		login.GET("/items/mine", handler.ListMyItems)
+		login.PUT("/items/:itemId", handler.UpdateItem)
+		login.DELETE("/items/:itemId", handler.DeleteItem)
+		login.PATCH("/items/:itemId/status", handler.UpdateItemStatus)
 	}
 	root := api.Group("", middleware.RequireRoleMiddleware(model.RoleSysAdmin),
 		middleware.RequireAuthMiddleware())

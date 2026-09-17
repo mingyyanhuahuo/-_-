@@ -89,10 +89,10 @@ func CountItemsByCategory(categoryID uint) (int64, error) {
 	return count, nil
 }
 
-func CountApprovedClaim(itemID, useID uint) (int64, error) {
+func CountApprovedClaim(itemID, userID uint) (int64, error) {
 	var count int64
 	err := db.Model(&model.Claim{}).
-		Where("item_id = ? AND user_id = ? AND pending_status = ?", itemID, useID, "approved").
+		Where("item_id = ? AND user_id = ? AND pending_status = ?", itemID, userID, model.ClaimStatusApproved).
 		Count(&count).Error
 	if err != nil {
 		return 0, err

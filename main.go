@@ -19,6 +19,33 @@ import (
 	"gorm.io/gorm"
 )
 
+func startViewSync() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Logger.Error("浏览量同步服务异常退出", zap.Any("error", r))
+		}
+	}()
+	if redisdb.Refresh() {
+		dao.SyncViewToDB()
+	}
+	tricker := time.NewTicker(5 * time.Second)
+	defer tricker.Stop()
+	for range tricker.C {
+		wasAvailable := redisdb.Available.Load()
+		nowAvailable := redisdb.Refresh()
+		if wasAvailable != nowAvailable {
+			if nowAvailable {
+				logger.Logger.Info("Redis服务恢复可用")
+			} else {
+				logger.Logger.Warn("Redis服务不可用")
+			}
+		}
+		if nowAvailable {
+			dao.SyncViewToDB()
+		}
+	}
+}
+
 func initDB() *gorm.DB {
 	dsn := config.GetConfig().Mysql.Dsn
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -28,6 +55,11 @@ func initDB() *gorm.DB {
 	return db
 }
 func startPublishScheduler() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Logger.Error("定时发布公告服务异常退出", zap.Any("error", r))
+		}
+	}()
 	tricker := time.NewTicker(1 * time.Minute)
 	defer tricker.Stop()
 	for range tricker.C {
@@ -57,6 +89,7 @@ func main() {
 	dao.InitDB(db)
 	go startPublishScheduler()
 	redisdb.InitRedis()
+	go startViewSync()
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
