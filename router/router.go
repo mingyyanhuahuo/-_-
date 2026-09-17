@@ -17,12 +17,35 @@ func InitRouter(r *gin.Engine) {
 
 	api.GET("/announcements", handler.AnnouncementList)
 	api.GET("/announcements/:announcementId", handler.GetAnnouncement)
+	api.GET("/items/:itemId", handler.GetItemDetail)
+	api.GET("/items", handler.ListItems)
 
-	admin := api.Group("/announcements",
+	login := api.Group("", middleware.RequireAuthMiddleware())
+	{
+		login.POST("/files/upload", handler.UploadFile)
+		login.DELETE("/files/:fileId", handler.DeleteFile)
+
+		login.POST("/items", handler.GenerateItem)
+		login.GET("/items/mine", handler.ListMyItems)
+		login.PUT("/items/:itemId", handler.UpdateItem)
+		login.DELETE("/items/:itemId", handler.DeleteItem)
+		login.PATCH("/items/:itemId/status", handler.UpdateItemStatus)
+	}
+	root := api.Group("",
 		middleware.RequireAuthMiddleware(),
-		middleware.RequireRole(model.RoleSysAdmin))
-	admin.POST("", handler.GenerateAnnouncement)
-	admin.PUT("/:announcementId", handler.UpdateAnnouncement)
-	admin.PATCH("/:announcementId/publish", handler.ChangeAnnouncementStatus)
-	admin.DELETE("/:announcementId", handler.DeleteAnnouncement)
+		middleware.RequireRoleMiddleware(model.RoleSysAdmin))
+	{
+		root.POST("/announcements", handler.GenerateAnnouncement)
+		root.PUT("/announcements/:announcementId", handler.UpdateAnnouncement)
+		root.PATCH("/announcements/:announcementId/publish", handler.ChangeAnnouncementStatus)
+		root.DELETE("/announcements/:announcementId", handler.DeleteAnnouncement)
+	}
+
+	/*
+		admin := api.Group("", middleware.RequireRoleMiddleware(model.RoleLfAdmin,model.RoleSysAdmin),
+		middleware.RequireAuthMiddleware())
+		{
+			admin.POST("/users", handler.CreateUser)
+		}
+	*/
 }

@@ -25,6 +25,20 @@ type ItemUpdateRequest struct {
 	ContactValue *string    `json:"contactValue" binding:"omitempty,max=100"`
 }
 
+type ItemListRequest struct {
+	Type       string     `form:"type" binding:"omitempty,oneof=lost found"`
+	CategoryId uint       `form:"categoryId"`
+	Keyword    string     `form:"keyword" binding:"max=50"`
+	Location   string     `form:"location"`
+	Status     string     `form:"status" binding:"omitempty,oneof=pending approved rejected claimed closed"`
+	StartTime  *time.Time `form:"startTime" time_format:"2006-01-02T15:04:05Z07:00"`
+	EndTime    *time.Time `form:"endTime" time_format:"2006-01-02T15:04:05Z07:00"`
+	SortBy     string     `form:"sortBy" binding:"omitempty,oneof=createTime lostTime"`
+	SortOrder  string     `form:"sortOrder" binding:"omitempty,oneof=asc desc"`
+	Page       int        `form:"page"`
+	PageSize   int        `form:"pageSize"`
+}
+
 type ClaimCreateRequest struct {
 	ItemId       uint     `json:"itemId" binding:"required"`
 	ClaimReason  string   `json:"claimReason" binding:"required,min=10,max=500"`

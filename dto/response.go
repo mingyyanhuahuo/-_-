@@ -78,3 +78,19 @@ type ClaimDetail struct {
 	ReviewerId   *uint      `json:"reviewerId"`
 	ReviewTime   *time.Time `json:"reviewTime"`
 }
+
+type UpLoadResponse struct {
+	FileId   string `json:"fileId"`
+	Url      string `json:"url"`
+	Size     uint   `json:"size"`
+	MimeType string `json:"mimeType"`
+}
+
+type ItemStatusResponse struct {
+	ItemId uint   `json:"itemId"`
+	Status string `json:"status"`
+}
+type ItemsList struct {
+	PageMeta
+	Items []ItemBrief `json:"list"`
+}

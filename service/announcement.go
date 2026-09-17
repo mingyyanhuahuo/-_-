@@ -115,6 +115,9 @@ func UpdateAnnouncement(id uint, req *dto.AnnouncementRequest) (*model.Announcem
 		"is_top":     req.IsTop,
 		"publish_at": publishAt,
 	}
+	if announcement.AnnouncementStatus == model.AnnouncementStatusDraft {
+		fields["announcement_status"] = model.AnnouncementStatusDraft
+	}
 	if err := dao.UpdateAnnouncement(id, fields); err != nil {
 		logger.Logger.Error("更新公告失败", zap.Uint("announcementId", id), zap.Error(err))
 		return nil, errcode.ErrInternalServer

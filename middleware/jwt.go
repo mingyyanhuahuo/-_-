@@ -51,7 +51,7 @@ func RequireAuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func RequireRole(roles ...string) gin.HandlerFunc {
+func RequireRoleMiddleware(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole, exists := c.Get("role")
 		if !exists {
