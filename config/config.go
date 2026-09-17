@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Redis    RedisConfig    `yaml:"redis"`
 	DeepSeek DeepSeekConfig `yaml:"deepseek"`
+	Upload   UploadConfig   `yaml:"upload"`
 }
 type DeepSeekConfig struct {
 	ApiKey              string `mapstructure:"api_key"`
@@ -38,6 +39,11 @@ type RedisConfig struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
+}
+
+type UploadConfig struct {
+	Dir     string `yaml:"dir"`
+	BaseUrl string `yaml:"base_url"`
 }
 
 var config *Config

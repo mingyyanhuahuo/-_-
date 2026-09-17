@@ -52,6 +52,7 @@ var (
 	ErrFileTypeNotSupport = &BizError{400, 4001, "文件类型不支持"}
 	ErrFileTooLarge       = &BizError{400, 4002, "文件大小超限"}
 	ErrFileNotFound       = &BizError{404, 4003, "文件不存在或已删除"}
+	ErrRecordNotFound     = &BizError{404, 4004, "记录不存在或已删除"}
 
 	ErrInternalServer = &BizError{500, 5000, "服务器内部错误"}
 )
