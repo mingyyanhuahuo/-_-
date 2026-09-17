@@ -27,7 +27,12 @@ func normalizePageNum(page, pageSize int) (int, int) {
 func ListAnnouncements(role, status string, page, pageSize int) (*dto.AnnouncementsList, error) {
 	publishedOnly := (role != model.RoleSysAdmin)
 	if publishedOnly {
-		status = model.AnnouncementStatusPublished
+		switch status {
+		case "", model.AnnouncementStatusPublished:
+			status = model.AnnouncementStatusPublished
+		default:
+			return nil, errcode.ErrForbidden
+		}
 	}
 
 	page, pageSize = normalizePageNum(page, pageSize)

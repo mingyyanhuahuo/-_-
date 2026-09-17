@@ -14,16 +14,18 @@ func InitRouter(r *gin.Engine) {
 	auth := api.Group("/auth")
 	auth.POST("/register", handler.Register)
 	auth.POST("/login", handler.Login)
+	apiJWT := api.Group("", middleware.JWTAuthMiddleware())
+	apiJWT.GET("/announcements", handler.AnnouncementList)
+	apiJWT.GET("/announcements/:announcementId", handler.GetAnnouncement)
+	apiJWT.GET("/items/:itemId", handler.GetItemDetail)
+	apiJWT.GET("/items", handler.ListItems)
 
-	api.GET("/announcements", handler.AnnouncementList)
-	api.GET("/announcements/:announcementId", handler.GetAnnouncement)
-	api.GET("/items/:itemId", handler.GetItemDetail)
-	api.GET("/items", handler.ListItems)
-
-	login := api.Group("", middleware.RequireAuthMiddleware())
+	login := api.Group("",
+		middleware.JWTAuthMiddleware(),
+		middleware.RequireAuthMiddleware())
 	{
 		login.POST("/files/upload", handler.UploadFile)
-		login.DELETE("/files/:fileId", handler.DeleteFile)
+		// login.DELETE("/files/:fileId", handler.DeleteFile)
 
 		login.POST("/items", handler.GenerateItem)
 		login.GET("/items/mine", handler.ListMyItems)
@@ -32,6 +34,7 @@ func InitRouter(r *gin.Engine) {
 		login.PATCH("/items/:itemId/status", handler.UpdateItemStatus)
 	}
 	root := api.Group("",
+		middleware.JWTAuthMiddleware(),
 		middleware.RequireAuthMiddleware(),
 		middleware.RequireRoleMiddleware(model.RoleSysAdmin))
 	{

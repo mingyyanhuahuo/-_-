@@ -44,6 +44,34 @@ func itemImageURLs(item *model.Item) []string {
 	}
 	return urls
 }
+func checkImages(userID uint, urls []string) error {
+	if len(urls) == 0 {
+		return nil
+	}
+	uniq := make(map[string]struct{}, len(urls))
+	list := make([]string, 0, len(urls))
+	for _, url := range urls {
+		if _, ok := uniq[url]; ok {
+			continue
+		}
+		uniq[url] = struct{}{}
+		list = append(list, url)
+	}
+	files, err := dao.GetFilesByURLs(list)
+	if err != nil {
+		logger.Logger.Error("查询文件失败", zap.Uint("userId", userID), zap.Strings("urls", list), zap.Error(err))
+		return errcode.ErrInternalServer
+	}
+	if len(files) != len(list) {
+		return errcode.ErrFileNotFound
+	}
+	for i := range files {
+		if files[i].UserID != userID {
+			return errcode.ErrFileNotFound
+		}
+	}
+	return nil
+}
 func checkCategory(categoryID uint) error {
 	category, err := dao.GetItemTypeByID(categoryID)
 	if err != nil {
@@ -141,6 +169,9 @@ func GenerateItem(userID uint, req *dto.ItemCreateRequest) (*dto.ItemStatusRespo
 		return nil, errcode.ErrBadRequest
 	}
 	if err := checkCategory(req.CategoryId); err != nil {
+		return nil, err
+	}
+	if err := checkImages(userID, req.Images); err != nil {
 		return nil, err
 	}
 	images, err := json.Marshal(req.Images)
@@ -276,6 +307,9 @@ func UpdateItem(UserID, itemID uint, req *dto.ItemUpdateRequest) (*dto.ItemStatu
 		fields["lost_time"] = *req.LostTime
 	}
 	if req.Images != nil {
+		if err := checkImages(UserID, req.Images); err != nil {
+			return nil, err
+		}
 		images, err := json.Marshal(req.Images)
 		if err != nil {
 			logger.Logger.Error("序列化图片列表失败", zap.Uint("user_Id", UserID), zap.Error(err))
