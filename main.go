@@ -109,6 +109,7 @@ func main() {
 	go startPublishScheduler()
 	redisdb.InitRedis()
 	go startViewSync()
+	go startFileClean()
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
@@ -116,7 +117,7 @@ func main() {
 	r := gin.Default()
 	r.Static("/uploads", uploadDir)
 	r.Use(middleware.AccessLog())
-	r.Use(middleware.FrequentWare())
+	// r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
 	router.InitRouter(r)
 	port := config.GetConfig().Server.Port
