@@ -42,6 +42,5 @@ func AccessLog() gin.HandlerFunc {
 			zap.Duration("duration", time.Since(startTime)),
 			zap.String("client_ip", c.ClientIP()),
 		)
-		return
 	}
 }

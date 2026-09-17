@@ -62,6 +62,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.AccessLog())
+	r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
 	r.Use(middleware.JWTAuthMiddleware())
 	router.InitRouter(r)
