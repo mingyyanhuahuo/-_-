@@ -6,7 +6,10 @@ import (
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/hashpassword"
 	"lostfound/pkg/jwtutil"
+	"lostfound/pkg/redisdb"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Register(body *model.RegisterBody) (int64, error) {
@@ -99,6 +102,7 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 	if err != nil {
 		return Response, err
 	}
+
 	access, err := jwtutil.GenerateAccessToken(Cliam.UserID, Cliam.Role)
 	if err != nil {
 		return Response, err
@@ -108,10 +112,88 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 		return Response, err
 	}
 
+	if err := redisdb.RemveToken(refreshToken, time.Until(Cliam.ExpiresAt.Time)); err != nil {
+		return Response, err
+	}
+
 	Response = model.RefreshResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
 		ExpiresIn:    7200,
 	}
 	return Response, nil
+}
+
+func Logout(refreshToken string) error {
+	Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh)
+	if err != nil {
+		return err
+	}
+
+	dration := time.Until(Cliam.ExpiresAt.Time)
+	if dration <= 0 {
+		return nil
+	}
+	if err := redisdb.RemveToken(refreshToken, dration); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetMe(userid uint) (model.UserInfo, error) {
+	var userinfo model.UserInfo
+	user, err := dao.IDtoUser(userid)
+	if err != nil {
+		return userinfo, err
+	}
+
+	userinfo = model.UserInfo{
+		UserID:     user.ID,
+		UserName:   user.UserName,
+		NickName:   user.NickName,
+		Avatar:     user.Avatar,
+		StudentNo:  user.StudentNo,
+		Phone:      user.Phone,
+		Email:      user.Email,
+		Role:       user.Role,
+		CreateTime: user.CreatedAt,
+	}
+
+	return userinfo, nil
+}
+
+func UpdatePassaard(oldPwd string, newPwd string, ID uint, refreshToken string) error {
+	user, err := dao.IDtoUser(ID)
+	if err != nil {
+		return err
+	}
+
+	newHashedPassword, err := hashpassword.Hash(newPwd)
+	if err != nil {
+		return err
+	}
+
+	switch err := hashpassword.CheckHash(user.PassHash, oldPwd); err {
+	case bcrypt.ErrMismatchedHashAndPassword:
+		return errcode.ErrOldPwdWrong
+	case nil:
+		if err := dao.UpdatePassword(user, newHashedPassword); err != nil {
+			return err
+		}
+		Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh)
+		if err != nil {
+			return err
+		}
+
+		dration := time.Until(Cliam.ExpiresAt.Time)
+		if dration <= 0 {
+			return nil
+		}
+		if err := redisdb.RemveToken(refreshToken, dration); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return err
+	}
 }

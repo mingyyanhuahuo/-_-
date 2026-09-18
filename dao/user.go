@@ -55,3 +55,24 @@ func CreateUser(user *model.User) error {
 	}
 	return nil
 }
+
+func IDtoUser(ID uint) (*model.User, error) {
+	var user model.User
+	if err := db.Where("id = ?", ID).First(&user).Error; err != nil {
+		if err.Error() == "record not found" {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func UpdatePassword(user *model.User, newHashedPassword string) error {
+	result := db.Model(&model.User{}).
+		Where("id = ?", user.ID).
+		Update("pass_hash", newHashedPassword)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

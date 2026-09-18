@@ -26,7 +26,6 @@ func AccessLog() gin.HandlerFunc {
 			logger.Logger.Warn("请求日志",
 				zap.Uint("user_id", c.GetUint("id")),
 				zap.Int("status", c.Writer.Status()),
-				zap.String("ip", c.ClientIP()),
 				zap.String("error", errMsg),
 				zap.String("method", c.Request.Method),
 				zap.String("path", c.Request.URL.Path),

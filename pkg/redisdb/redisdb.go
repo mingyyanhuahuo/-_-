@@ -21,6 +21,7 @@ func Refresh() bool {
 	Available.Store(ok)
 	return ok
 }
+
 func InitRedis() {
 	redisConfig := config.GetConfig().Redis
 	Rdb = redis.NewClient(&redis.Options{
@@ -57,4 +58,8 @@ func RequestsTimeLimit(ip string) (*errcode.BizError, error) {
 		return errcode.ErrTooManyRequests, nil
 	}
 	return nil, nil
+}
+
+func ChackToken(token string) (int64, error) {
+	return Rdb.Exists(context.Background(), token).Result()
 }
