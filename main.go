@@ -54,6 +54,7 @@ func initDB() *gorm.DB {
 	}
 	return db
 }
+
 func startPublishScheduler() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -73,6 +74,7 @@ func startPublishScheduler() {
 		}
 	}
 }
+
 func main() {
 	logger.InitLogger()
 	logger.Logger.Info("日志服务启动", zap.String("port", config.GetConfig().Server.Port))
@@ -99,7 +101,6 @@ func main() {
 	r.Use(middleware.AccessLog())
 	r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
-	r.Use(middleware.JWTAuthMiddleware())
 	router.InitRouter(r)
 	port := config.GetConfig().Server.Port
 	log.Printf("服务启动，监听端口: %s", port)

@@ -15,6 +15,9 @@ func InitRouter(r *gin.Engine) {
 	auth.POST("/register", handler.Register)
 	auth.POST("/login", handler.Login)
 
+	api.Use(middleware.JWTAuthMiddleware())
+	auth.POST("/refresh", handler.RefreshToken)
+
 	api.GET("/announcements", handler.AnnouncementList)
 	api.GET("/announcements/:announcementId", handler.GetAnnouncement)
 	api.GET("/items/:itemId", handler.GetItemDetail)

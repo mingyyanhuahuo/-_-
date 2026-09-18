@@ -43,3 +43,21 @@ func Login(c *gin.Context) {
 
 	response.OK(c, LR)
 }
+
+func RefreshToken(c *gin.Context) {
+	var Body struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+	if err := c.ShouldBindJSON(&Body); err != nil {
+		BindError(c, err)
+		return
+	}
+
+	RR, err := service.RefreshToken(Body.RefreshToken)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.OK(c, RR)
+}

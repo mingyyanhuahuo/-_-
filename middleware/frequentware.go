@@ -12,16 +12,19 @@ import (
 func FrequentWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		err, ErrCode := redisdb.RequestsTimeLimit(ip)
+		result, err := redisdb.RequestsTimeLimit(ip)
 		if err != nil {
-			logger.Logger.Error("未知错误", zap.Error(err))
+			logger.Logger.Error("频繁请求内部错误", zap.Error(err))
+			response.Err(c, result)
 			c.Abort()
 			return
 		}
-		if ErrCode != nil {
-			response.Err(c, ErrCode)
+		if result != nil {
+			response.Err(c, result)
 			c.Abort()
 			return
 		}
+
+		c.Next()
 	}
 }

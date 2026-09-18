@@ -15,16 +15,16 @@ func Register(body *model.RegisterBody) (int64, error) {
 	}
 
 	if _, err := dao.OnlyUsername(body.Username); err != nil {
-		return 0, errcode.ErrUserExist
+		return 0, err
 	}
 	if _, err := dao.OnlyStudentNo(body.StudentNo); err != nil {
-		return 0, errcode.ErrStudentIDRegistered
+		return 0, err
 	}
 	if _, err := dao.OnlyPhone(body.Phone); err != nil {
-		return 0, errcode.ErrPhoneRegistered
+		return 0, err
 	}
 	if _, err := dao.OnlyEmail(body.Email); err != nil {
-		return 0, errcode.ErrEmailRegistered
+		return 0, err
 	}
 
 	HashPassword, err := hashpassword.Hash(body.Password)
@@ -50,10 +50,10 @@ func Register(body *model.RegisterBody) (int64, error) {
 	return int64(user.ID), nil
 }
 
-func Login(username, password string) (model.LoginResponse, error) {
+func Login(username string, password string) (model.LoginResponse, error) {
 	var LoginReponse model.LoginResponse
 	user, err := dao.OnlyUsername(username)
-	if err != nil {
+	if err != nil && err != errcode.ErrUserExist {
 		return LoginReponse, err
 	}
 	if user == nil {
@@ -91,4 +91,27 @@ func Login(username, password string) (model.LoginResponse, error) {
 		return LoginReponse, nil
 	}
 
+}
+
+func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
+	var Response model.RefreshResponse
+	Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh)
+	if err != nil {
+		return Response, err
+	}
+	access, err := jwtutil.GenerateAccessToken(Cliam.UserID, Cliam.Role)
+	if err != nil {
+		return Response, err
+	}
+	refresh, err := jwtutil.GenerateRefreshToken(Cliam.UserID, Cliam.Role)
+	if err != nil {
+		return Response, err
+	}
+
+	Response = model.RefreshResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+		ExpiresIn:    7200,
+	}
+	return Response, nil
 }
