@@ -119,7 +119,7 @@ func main() {
 	r := gin.Default()
 	r.Static("/uploads", uploadDir)
 	r.Use(middleware.AccessLog())
-	// r.Use(middleware.FrequentWare())
+	r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
 	router.InitRouter(r)
 	port := config.GetConfig().Server.Port

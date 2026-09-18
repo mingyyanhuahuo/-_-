@@ -42,21 +42,18 @@ func InitRedis() {
 func RequestsTimeLimit(ip string) (*errcode.BizError, error) {
 	ctx := context.Background()
 
-	_, err := Rdb.Get(ctx, ip).Result()
-	if err != nil {
-		if err == redis.Nil {
-			if _, err := Rdb.Set(ctx, ip, "0", 60).Result(); err != nil {
-				return errcode.ErrInternalServer, err
-			}
-			return nil, nil
-		}
-		return errcode.ErrInternalServer, err
-	}
-
 	count, err := Rdb.Incr(ctx, ip).Result()
 	if err != nil {
 		return errcode.ErrInternalServer, err
-	} else if count > 11 {
+	}
+
+	if count == 1 {
+		if err := Rdb.Expire(ctx, ip, time.Minute).Err(); err != nil {
+			return errcode.ErrInternalServer, err
+		}
+	}
+
+	if count > 10 {
 		return errcode.ErrTooManyRequests, nil
 	}
 	return nil, nil
