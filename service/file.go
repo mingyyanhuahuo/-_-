@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"io"
 	"lostfound/config"
 	"lostfound/dao"
@@ -15,9 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 var allowedImageTypes = map[string]string{
@@ -90,38 +89,71 @@ func UploadFile(userID uint, fileHeader *multipart.FileHeader) (*model.File, err
 	}
 	return file, nil
 }
-func DeleteFile(userID uint, role string, fileID uint) error {
-	file, err := dao.GetFileByID(fileID)
+
+// func DeleteFile(userID uint, role string, fileID uint) error {
+// 	file, err := dao.GetFileByID(fileID)
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return errcode.ErrFileNotFound
+// 		}
+// 		logger.Logger.Error("查询文件记录失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
+// 		return errcode.ErrInternalServer
+// 	}
+// 	if file.UserID != userID && role != model.RoleSysAdmin {
+// 		return errcode.ErrFileNotFound
+// 	}
+// 	itemCount, err := dao.CountItemByImage(file.Url)
+// 	if err != nil {
+// 		logger.Logger.Error("统计物品引用失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
+// 		return errcode.ErrInternalServer
+// 	}
+// 	if itemCount > 0 {
+// 		return errcode.ErrInfoStatusNotAllow
+// 	}
+// 	claimCount, err := dao.CountClaimByProofImage(file.Url)
+// 	if err != nil {
+// 		logger.Logger.Error("统计认领申请引用失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
+// 		return errcode.ErrInternalServer
+// 	}
+// 	if claimCount > 0 {
+// 		return errcode.ErrInfoStatusNotAllow
+// 	}
+// 	if err := dao.DeleteFile(fileID); err != nil {
+// 		logger.Logger.Error("删除文件记录失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
+// 		return errcode.ErrInternalServer
+// 	}
+// 	os.Remove(filepath.Join(UpLoadDir(), filepath.Base(file.Url)))
+// 	return nil
+// }
+
+func CleanOldFiles() (int, error) {
+	files, err := dao.ListExpiredFiles(time.Now().Add(-fileCleanGrace), 200)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errcode.ErrFileNotFound
+		logger.Logger.Error("查询过期文件失败", zap.Error(err))
+		return 0, err
+	}
+	cleaned := 0
+	for _, file := range files {
+		itemCount, err := dao.CountItemByImage(file.Url)
+		if err != nil {
+			logger.Logger.Error("统计物品引用失败", zap.Uint("fileID", file.ID), zap.Error(err))
+			continue
 		}
-		logger.Logger.Error("查询文件记录失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
-		return errcode.ErrInternalServer
+		claimCount, err := dao.CountClaimByProofImage(file.Url)
+		if err != nil {
+			logger.Logger.Error("统计认领申请引用失败", zap.Uint("fileID", file.ID), zap.Error(err))
+			continue
+		}
+		if itemCount > 0 || claimCount > 0 {
+			continue
+		}
+		if err := dao.DeleteFile(file.ID); err != nil {
+			logger.Logger.Error("删除文件记录失败", zap.Uint("fileID", file.ID), zap.Error(err))
+			continue
+		}
+		os.Remove(filepath.Join(UpLoadDir(), filepath.Base(file.Url)))
+		cleaned++
 	}
-	if file.UserID != userID && role != model.RoleSysAdmin {
-		return errcode.ErrFileNotFound
-	}
-	itemCount, err := dao.CountItemByImage(file.Url)
-	if err != nil {
-		logger.Logger.Error("统计物品引用失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
-		return errcode.ErrInternalServer
-	}
-	if itemCount > 0 {
-		return errcode.ErrInfoStatusNotAllow
-	}
-	claimCount, err := dao.CountClaimByProofImage(file.Url)
-	if err != nil {
-		logger.Logger.Error("统计认领申请引用失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
-		return errcode.ErrInternalServer
-	}
-	if claimCount > 0 {
-		return errcode.ErrInfoStatusNotAllow
-	}
-	if err := dao.DeleteFile(fileID); err != nil {
-		logger.Logger.Error("删除文件记录失败", zap.Uint("userID", userID), zap.Uint("fileID", fileID), zap.Error(err))
-		return errcode.ErrInternalServer
-	}
-	os.Remove(filepath.Join(UpLoadDir(), filepath.Base(file.Url)))
-	return nil
+	return cleaned, nil
+
 }

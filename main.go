@@ -19,6 +19,25 @@ import (
 	"gorm.io/gorm"
 )
 
+func startFileClean() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Logger.Error("文件清理服务异常退出", zap.Any("error", r))
+		}
+	}()
+	tricker := time.NewTicker(1 * time.Hour)
+	defer tricker.Stop()
+	for range tricker.C {
+		n, err := service.CleanOldFiles()
+		if err != nil {
+			logger.Logger.Error("清理过期文件失败", zap.Error(err))
+			continue
+		}
+		if n > 0 {
+			logger.Logger.Info("清理过期文件成功", zap.Int("count", n))
+		}
+	}
+}
 func startViewSync() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -92,6 +111,7 @@ func main() {
 	go startPublishScheduler()
 	redisdb.InitRedis()
 	go startViewSync()
+	go startFileClean()
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
@@ -99,7 +119,7 @@ func main() {
 	r := gin.Default()
 	r.Static("/uploads", uploadDir)
 	r.Use(middleware.AccessLog())
-	r.Use(middleware.FrequentWare())
+	// r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
 	router.InitRouter(r)
 	port := config.GetConfig().Server.Port
