@@ -5,7 +5,6 @@ import (
 	"lostfound/config"
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/logger"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -22,6 +21,7 @@ func Refresh() bool {
 	Available.Store(ok)
 	return ok
 }
+
 func InitRedis() {
 	redisConfig := config.GetConfig().Redis
 	Rdb = redis.NewClient(&redis.Options{
@@ -40,24 +40,26 @@ func InitRedis() {
 	}
 }
 
-func RequestsTimeLimit(ip string) (error, *errcode.BizError) {
+func RequestsTimeLimit(ip string) (*errcode.BizError, error) {
 	ctx := context.Background()
 
-	val_s, err1 := Rdb.Get(ctx, ip).Result()
-	count, err := strconv.Atoi(val_s)
+	count, err := Rdb.Incr(ctx, ip).Result()
 	if err != nil {
-		return err, nil
+		return errcode.ErrInternalServer, err
 	}
-	if err1 == redis.Nil {
-		if _, err := Rdb.Set(ctx, ip, 0, 60).Result(); err != nil {
-			return err, nil
+
+	if count == 1 {
+		if err := Rdb.Expire(ctx, ip, time.Minute).Err(); err != nil {
+			return errcode.ErrInternalServer, err
 		}
-	} else if count <= 10 {
-		if _, err := Rdb.Incr(ctx, ip).Result(); err != nil {
-			return err, nil
-		}
-	} else {
-		return nil, errcode.ErrTooManyRequests
+	}
+
+	if count > 10 {
+		return errcode.ErrTooManyRequests, nil
 	}
 	return nil, nil
+}
+
+func ChackToken(token string) (int64, error) {
+	return Rdb.Exists(context.Background(), token).Result()
 }

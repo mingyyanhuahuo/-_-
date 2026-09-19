@@ -26,7 +26,7 @@ func ErrorMiddleware() gin.HandlerFunc {
 			response.Err(c, bizErr)
 			return
 		}
-		logger.Logger.Error("未知错误", zap.Error(err))
+		logger.Logger.Error("中间件截取到的错误", zap.Error(err))
 		response.Err(c, errcode.ErrInternalServer)
 	}
 }

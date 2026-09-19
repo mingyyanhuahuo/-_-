@@ -2,6 +2,7 @@ package jwtutil
 
 import (
 	"errors"
+	"lostfound/pkg/redisdb"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -73,5 +74,13 @@ func ParseToken(tokenString string, tokenType TokenType) (*Claims, error) {
 	if claims.Type != string(tokenType) {
 		return nil, errors.New("token类型不匹配")
 	}
+
+	n, err := redisdb.ChackToken(tokenString)
+	if err != nil {
+		return nil, err
+	} else if n > 0 {
+		return nil, errors.New("token无效(黑名单)")
+	}
+
 	return claims, nil
 }

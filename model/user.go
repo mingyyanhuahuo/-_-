@@ -47,3 +47,9 @@ type UserInfo struct {
 	Role       string    `gorm:"size:16;default:student" json:"role"`
 	CreateTime time.Time `json:"createTime"`
 }
+
+type RefreshResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int64  `json:"expiresIn"`
+}
