@@ -44,6 +44,7 @@ var (
 	ErrCategoryHasItem    = &BizError{409, 3007, "分类下存在物品，无法删除"}
 	ErrCategoryNameExist  = &BizError{409, 3008, "分类名称已存在"}
 	ErrCategoryInvalid    = &BizError{400, 3012, "分类不存在或已禁用"}
+	ErrClaimTooFrequent   = &BizError{409, 3013, "认领申请提交过于频繁"}
 
 	ErrAnnouncementNotFound       = &BizError{404, 3009, "公告不存在"}
 	ErrAnnouncementStatusNotAllow = &BizError{409, 3010, "公告状态不允许该操作"}

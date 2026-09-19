@@ -43,7 +43,7 @@ func CountClaimByProofImage(url string) (int64, error) {
 	var count int64
 	err := db.Model(&model.Claim{}).
 		Where("JSON_CONTAINS(proof_images, JSON_QUOTE(?))", url).
-		Where("pending_status != ?", model.ClaimStatusCancelled).
+		Where("pending_status NOT IN ?", []string{model.ClaimStatusCancelled, model.ClaimStatusRejected}).
 		Count(&count).Error
 	return count, err
 }

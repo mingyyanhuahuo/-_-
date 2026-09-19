@@ -75,7 +75,7 @@ type ClaimDetail struct {
 	ProofImages  []string   `json:"proofImages"`
 	ContactValue string     `json:"contactValue"`
 	Remark       *string    `json:"remark"`
-	ReviewerId   *uint      `json:"reviewerId"`
+	ReviewerID   *uint      `json:"reviewerId"`
 	ReviewTime   *time.Time `json:"reviewTime"`
 }
 
@@ -93,4 +93,14 @@ type ItemStatusResponse struct {
 type ItemsList struct {
 	PageMeta
 	Items []ItemBrief `json:"list"`
+}
+
+type ClaimStatusResponse struct {
+	ClaimId uint   `json:"claimId"`
+	Status  string `json:"status"`
+}
+
+type ClaimsListRep struct {
+	PageMeta
+	List []ClaimBrief `json:"list"`
 }

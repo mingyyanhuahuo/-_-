@@ -32,6 +32,13 @@ func InitRouter(r *gin.Engine) {
 		login.PUT("/items/:itemId", handler.UpdateItem)
 		login.DELETE("/items/:itemId", handler.DeleteItem)
 		login.PATCH("/items/:itemId/status", handler.UpdateItemStatus)
+
+		login.POST("/claims", handler.GenerateClaim)
+		login.GET("/claims/mine", handler.ListMyClaims)
+		login.GET("/items/:itemId/claims", handler.ListItemClaims)
+		login.GET("/claims/:claimId", handler.GetClaimDetail)
+		login.DELETE("/claims/:claimId", handler.CancelClaim)
+
 	}
 	root := api.Group("",
 		middleware.JWTAuthMiddleware(),
