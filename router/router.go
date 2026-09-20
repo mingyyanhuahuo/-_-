@@ -12,15 +12,16 @@ func InitRouter(r *gin.Engine) {
 	api := r.Group("/api/v1")
 
 	auth := api.Group("/auth")
-	auth.POST("/register", handler.Register)
-	auth.POST("/login", handler.Login)
-	auth.Use(middleware.JWTAuthMiddleware())
+	auth.POST("/register", middleware.AuthLimit, handler.Register)
+	auth.POST("/login", middleware.AuthLimit, handler.Login)
+
+	auth.Use(middleware.JWTAuthMiddleware(), middleware.QueryLimit)
 	auth.POST("/refresh", handler.RefreshToken)
 	auth.POST("/logout", handler.Logout)
 	auth.GET("/me", handler.GetMe)
-	auth.PUT("/password", handler.UpdatePassword)
+	auth.PUT("/password", middleware.AuthLimit, handler.UpdatePassword)
 
-	apiJWT := api.Group("", middleware.JWTAuthMiddleware())
+	apiJWT := api.Group("", middleware.JWTAuthMiddleware(), middleware.QueryLimit)
 	apiJWT.GET("/announcements", handler.AnnouncementList)
 	apiJWT.GET("/announcements/:announcementId", handler.GetAnnouncement)
 	apiJWT.GET("/items/:itemId", handler.GetItemDetail)
@@ -28,18 +29,18 @@ func InitRouter(r *gin.Engine) {
 
 	login := api.Group("",
 		middleware.JWTAuthMiddleware(),
-		middleware.RequireAuthMiddleware())
+		middleware.RequireAuthMiddleware(), middleware.QueryLimit)
 	{
-		login.POST("/files/upload", handler.UploadFile)
+		login.POST("/files/upload", middleware.UploadLimit, handler.UploadFile)
 		// login.DELETE("/files/:fileId", handler.DeleteFile)
 
-		login.POST("/items", handler.GenerateItem)
+		login.POST("/items", middleware.PublishLimit, handler.GenerateItem)
 		login.GET("/items/mine", handler.ListMyItems)
 		login.PUT("/items/:itemId", handler.UpdateItem)
 		login.DELETE("/items/:itemId", handler.DeleteItem)
 		login.PATCH("/items/:itemId/status", handler.UpdateItemStatus)
 
-		login.POST("/claims", handler.GenerateClaim)
+		login.POST("/claims", middleware.ClaimLimit, handler.GenerateClaim)
 		login.GET("/claims/mine", handler.ListMyClaims)
 		login.GET("/items/:itemId/claims", handler.ListItemClaims)
 		login.GET("/claims/:claimId", handler.GetClaimDetail)
@@ -49,7 +50,8 @@ func InitRouter(r *gin.Engine) {
 	root := api.Group("",
 		middleware.JWTAuthMiddleware(),
 		middleware.RequireAuthMiddleware(),
-		middleware.RequireRoleMiddleware(model.RoleSysAdmin))
+		middleware.RequireRoleMiddleware(model.RoleSysAdmin),
+		middleware.QueryLimit)
 	{
 		root.POST("/announcements", handler.GenerateAnnouncement)
 		root.PUT("/announcements/:announcementId", handler.UpdateAnnouncement)

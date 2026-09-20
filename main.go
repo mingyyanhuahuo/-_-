@@ -117,9 +117,13 @@ func main() {
 	}
 	uploadDir := service.UpLoadDir()
 	r := gin.Default()
-	r.Static("/uploads", uploadDir)
+	r.Group("/uploads", middleware.FrequentWare(middleware.LimitRule{
+		Namespace: "static",
+		Limit:     600,
+		Window:    1 * time.Minute,
+		ByIP:      true,
+	})).Static("", uploadDir)
 	r.Use(middleware.AccessLog())
-	r.Use(middleware.FrequentWare())
 	r.Use(middleware.ErrorMiddleware())
 	router.InitRouter(r)
 	port := config.GetConfig().Server.Port
