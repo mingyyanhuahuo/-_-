@@ -59,7 +59,3 @@ func RequestsTimeLimit(ip string) (*errcode.BizError, error) {
 	}
 	return nil, nil
 }
-
-func ChackToken(token string) (int64, error) {
-	return Rdb.Exists(context.Background(), token).Result()
-}
