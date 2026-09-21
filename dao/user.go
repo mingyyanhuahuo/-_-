@@ -56,6 +56,14 @@ func CreateUser(user *model.User) error {
 	return nil
 }
 
+func GetUserByID(id uint) (*model.User, error) {
+	var user model.User
+	if err := db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func IDtoUser(ID uint) (*model.User, error) {
 	var user model.User
 	if err := db.Where("id = ?", ID).First(&user).Error; err != nil {

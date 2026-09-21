@@ -11,3 +11,8 @@ const (
 	maxUploadFileSize = 5 << 20 // 5MB
 )
 const fileCleanGrace = 24 * time.Hour
+
+const (
+	claimDailyWindow      = 24 * time.Hour
+	maxClaimPerItemPerDay = 3
+)

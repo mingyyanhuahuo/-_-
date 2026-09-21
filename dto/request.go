@@ -40,12 +40,16 @@ type ItemListRequest struct {
 }
 
 type ClaimCreateRequest struct {
-	ItemId       uint     `json:"itemId" binding:"required"`
+	ItemID       uint     `json:"itemId" binding:"required"`
 	ClaimReason  string   `json:"claimReason" binding:"required,min=10,max=500"`
 	ProofImages  []string `json:"proofImages" binding:"max=3,dive,url"`
 	ContactValue string   `json:"contactValue" binding:"max=100"`
 }
-
+type ClaimListRequest struct {
+	Status   []string `form:"status" binding:"omitempty,dive,oneof=pending approved rejected cancelled"`
+	Page     int      `form:"page"`
+	PageSize int      `form:"pageSize"`
+}
 type UpdateItemStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 	Remark string `json:"remark" binding:"max=200"`

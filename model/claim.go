@@ -10,6 +10,7 @@ import (
 type Claim struct {
 	ID            uint           `json:"claimId"`
 	ItemID        uint           `gorm:"index" json:"itemId"`
+	Item          Item           `gorm:"foreignKey:ItemID" json:"-"`
 	UserID        uint           `gorm:"index" json:"-"`
 	User          User           `gorm:"foreignKey:UserID" json:"applicant"`
 	ReviewerID    *uint          `json:"reviewerId"`
