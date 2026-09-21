@@ -4,7 +4,7 @@ import (
 	"lostfound/dao"
 	"lostfound/model"
 	"lostfound/pkg/errcode"
-	"lostfound/pkg/hashpassword"
+	"lostfound/pkg/hash"
 	"lostfound/pkg/jwtutil"
 	"lostfound/pkg/redisdb"
 	"time"
@@ -30,7 +30,7 @@ func Register(body *model.RegisterBody) (int64, error) {
 		return 0, err
 	}
 
-	HashPassword, err := hashpassword.Hash(body.Password)
+	HashPassword, err := hash.Hash(body.Password)
 	if err != nil {
 		return 0, err
 	}
@@ -63,37 +63,41 @@ func Login(username string, password string) (model.LoginResponse, error) {
 		return LoginReponse, errcode.ErrUserPwdWrong
 	}
 
-	if err := hashpassword.CheckHash(user.PassHash, password); err != nil {
+	if err := hash.CheckHash(user.PassHash, password); err != nil {
 		return LoginReponse, errcode.ErrUserPwdWrong
-	} else {
-		access, err := jwtutil.GenerateAccessToken(user.ID, user.Role)
-		if err != nil {
-			return LoginReponse, err
-		}
-		refresh, err := jwtutil.GenerateRefreshToken(user.ID, user.Role)
-		if err != nil {
-			return LoginReponse, err
-		}
-
-		LoginReponse = model.LoginResponse{
-			AccessToken:  access,
-			RefreshToken: refresh,
-			ExpiresIn:    7200,
-			UserInfo: model.UserInfo{
-				UserID:     user.ID,
-				UserName:   user.UserName,
-				NickName:   user.NickName,
-				Avatar:     user.Avatar,
-				StudentNo:  user.StudentNo,
-				Phone:      user.Phone,
-				Email:      user.Email,
-				Role:       user.Role,
-				CreateTime: user.CreatedAt,
-			},
-		}
-		return LoginReponse, nil
 	}
 
+	access, err := jwtutil.GenerateAccessToken(user.ID, user.Role)
+	if err != nil {
+		return LoginReponse, err
+	}
+	refresh, err := jwtutil.GenerateRefreshToken(user.ID, user.Role)
+	if err != nil {
+		return LoginReponse, err
+	}
+
+	tokenHash := hash.HashToken(refresh)
+	if err := dao.CreateRefreshToken(user.ID, tokenHash, time.Now().Add(7*24*time.Hour)); err != nil {
+		return LoginReponse, err
+	}
+
+	LoginReponse = model.LoginResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+		ExpiresIn:    7200,
+		UserInfo: model.UserInfo{
+			UserID:     user.ID,
+			UserName:   user.UserName,
+			NickName:   user.NickName,
+			Avatar:     user.Avatar,
+			StudentNo:  user.StudentNo,
+			Phone:      user.Phone,
+			Email:      user.Email,
+			Role:       user.Role,
+			CreateTime: user.CreatedAt,
+		},
+	}
+	return LoginReponse, nil
 }
 
 func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
@@ -101,6 +105,19 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 	Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh)
 	if err != nil {
 		return Response, err
+	}
+
+	tokenHash := hash.HashToken(refreshToken)
+	rt, err := dao.GetRefreshTokenByToken(tokenHash)
+	if err != nil {
+		return Response, err
+	}
+	if rt == nil {
+		return Response, errcode.ErrTokenExpired
+	}
+	if rt.RevokedAt != nil {
+		_ = dao.RevokeAllRefreshTokensByUser(rt.UserID)
+		return Response, errcode.ErrTokenExpired
 	}
 
 	access, err := jwtutil.GenerateAccessToken(Cliam.UserID, Cliam.Role)
@@ -112,7 +129,14 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 		return Response, err
 	}
 
-	if err := redisdb.RemveToken(refreshToken, time.Until(Cliam.ExpiresAt.Time)); err != nil {
+	ttl := time.Until(Cliam.ExpiresAt.Time)
+	if ttl > 0 {
+		_ = redisdb.AddRevokedToken(tokenHash, ttl) // Redis 挂时 fail-open,DB 已吊销
+	}
+	if err := dao.RevokeRefreshToken(tokenHash); err != nil {
+		return Response, err
+	}
+	if err := dao.CreateRefreshToken(Cliam.UserID, tokenHash, Cliam.ExpiresAt.Time); err != nil {
 		return Response, err
 	}
 
@@ -130,11 +154,12 @@ func Logout(refreshToken string) error {
 		return err
 	}
 
-	dration := time.Until(Cliam.ExpiresAt.Time)
-	if dration <= 0 {
-		return nil
+	ttl := time.Until(Cliam.ExpiresAt.Time)
+	if ttl > 0 {
+		_ = redisdb.AddRevokedToken(refreshToken, ttl)
 	}
-	if err := redisdb.RemveToken(refreshToken, dration); err != nil {
+
+	if err := dao.RevokeRefreshToken(refreshToken); err != nil {
 		return err
 	}
 	return nil
@@ -168,29 +193,26 @@ func UpdatePassaard(oldPwd string, newPwd string, ID uint, refreshToken string) 
 		return err
 	}
 
-	newHashedPassword, err := hashpassword.Hash(newPwd)
+	newHashedPassword, err := hash.Hash(newPwd)
 	if err != nil {
 		return err
 	}
 
-	switch err := hashpassword.CheckHash(user.PassHash, oldPwd); err {
+	switch err := hash.CheckHash(user.PassHash, oldPwd); err {
 	case bcrypt.ErrMismatchedHashAndPassword:
 		return errcode.ErrOldPwdWrong
 	case nil:
 		if err := dao.UpdatePassword(user, newHashedPassword); err != nil {
 			return err
 		}
-		Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh)
-		if err != nil {
-			return err
-		}
 
-		dration := time.Until(Cliam.ExpiresAt.Time)
-		if dration <= 0 {
-			return nil
-		}
-		if err := redisdb.RemveToken(refreshToken, dration); err != nil {
-			return err
+		_ = dao.RevokeAllRefreshTokensByUser(ID)
+		if refreshToken != "" {
+			if Cliam, err := jwtutil.ParseToken(refreshToken, jwtutil.TokenTypeRefresh); err == nil {
+				if ttl := time.Until(Cliam.ExpiresAt.Time); ttl > 0 {
+					_ = redisdb.AddRevokedToken(refreshToken, ttl)
+				}
+			}
 		}
 		return nil
 	default:

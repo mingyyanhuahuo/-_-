@@ -75,10 +75,9 @@ func ParseToken(tokenString string, tokenType TokenType) (*Claims, error) {
 		return nil, errors.New("token类型不匹配")
 	}
 
-	n, err := redisdb.ChackToken(tokenString)
-	if err != nil {
-		return nil, err
-	} else if n > 0 {
+	// 黑名单检查:Redis 挂时 fail-open,refresh token 由上层 service 走 DB 兜底
+	revoked, _ := redisdb.IsRevokedToken(tokenString)
+	if revoked {
 		return nil, errors.New("token无效(黑名单)")
 	}
 

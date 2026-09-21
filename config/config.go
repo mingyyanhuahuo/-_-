@@ -42,8 +42,8 @@ type RedisConfig struct {
 }
 
 type UploadConfig struct {
-	Dir     string `yaml:"dir"`
-	BaseUrl string `yaml:"base_url"`
+	Dir     string `mapstructure:"dir"`
+	BaseUrl string `mapstructure:"base_url"`
 }
 
 var config *Config

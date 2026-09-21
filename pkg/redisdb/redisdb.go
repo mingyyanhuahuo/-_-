@@ -60,7 +60,3 @@ func RequestsTimeLimit(key string, limit int64, window time.Duration) (*errcode.
 	}
 	return nil, nil
 }
-
-func ChackToken(token string) (int64, error) {
-	return Rdb.Exists(context.Background(), token).Result()
-}

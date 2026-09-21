@@ -66,6 +66,7 @@ type ItemDetail struct {
 	ClaimCount     uint           `json:"claimCount"`
 	IsFavorited    bool           `json:"isFavorited"`
 	RejectedReason *string        `json:"rejectedReason"`
+	CloseRemark    *string        `json:"closeRemark"`
 	CreateTime     time.Time      `json:"createTime"`
 	UpdateTime     time.Time      `json:"updateTime"`
 }

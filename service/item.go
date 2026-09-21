@@ -24,6 +24,7 @@ var publicItemStatus = []string{
 	model.ItemStatusClosed,
 }
 var itemStatusTransition = map[string][]string{
+	model.ItemStatusPending:  {model.ItemStatusApproved, model.ItemStatusRejected},
 	model.ItemStatusApproved: {model.ItemStatusClosed},
 	model.ItemStatusClosed:   {model.ItemStatusApproved},
 }
@@ -243,8 +244,12 @@ func GetItemDetail(userID, itemID uint, role string) (*dto.ItemDetail, error) {
 	}
 
 	var rejectedReason *string
+	var closeRemark *string
 	if item.RejectReason != "" {
 		rejectedReason = &item.RejectReason
+	}
+	if item.CloseRemark != "" {
+		closeRemark = &item.CloseRemark
 	}
 	return &dto.ItemDetail{
 		ItemId:       item.ID,
@@ -267,6 +272,7 @@ func GetItemDetail(userID, itemID uint, role string) (*dto.ItemDetail, error) {
 		ClaimCount:     item.ClaimCount,
 		IsFavorited:    favorited,
 		RejectedReason: rejectedReason,
+		CloseRemark:    closeRemark,
 		CreateTime:     item.CreatedAt,
 		UpdateTime:     item.UpdatedAt,
 	}, nil
@@ -416,14 +422,30 @@ func UpdateItemStatus(userID, itemID uint, role, status, remark string) error {
 	if !admin && status != model.ItemStatusClosed && status != model.ItemStatusApproved {
 		return errcode.ErrForbidden
 	}
+	if !admin && (item.Status == model.ItemStatusPending || item.Status == model.ItemStatusRejected) {
+		return errcode.ErrForbidden
+	}
 	if !slices.Contains(itemStatusTransition[item.Status], status) {
 		return errcode.ErrInfoStatusNotAllow
 	}
-	fields := map[string]any{
+	var fields = map[string]any{
 		"status": status,
 	}
-	if remark != "" {
-		fields["close_remark"] = remark
+	switch {
+	case item.Status == model.ItemStatusPending: // pengding -> approved/rejected
+		fields["admin_id"] = userID
+		fields["review_time"] = time.Now()
+		fields["reject_reason"] = ""
+		if status == model.ItemStatusRejected {
+			fields["reject_reason"] = remark
+		}
+
+	default:
+		if status == model.ItemStatusClosed {
+			fields["close_remark"] = remark
+		} else {
+			fields["close_remark"] = ""
+		}
 	}
 	if err := dao.UpdateItem(itemID, fields); err != nil {
 		logger.Logger.Error("更新物品状态失败", zap.Uint("user_Id", userID), zap.Error(err))
