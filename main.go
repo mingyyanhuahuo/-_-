@@ -71,6 +71,13 @@ func initDB() *gorm.DB {
 	if err != nil {
 		log.Fatalf("数据库连接失败: %v", err)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("获取数据库连接池失败: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(100) // 设置最大连接数
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(time.Hour) // 设置连接最大生命周期
 	return db
 }
 

@@ -13,7 +13,8 @@ func InitRouter(r *gin.Engine) {
 
 	auth := api.Group("/auth")
 	auth.POST("/register", middleware.AuthLimit, handler.Register)
-	auth.POST("/login", middleware.AuthLimit, handler.Login)
+	auth.POST("/login", middleware.AuthLimit, handler.Login,
+		middleware.QueryLimit)
 
 	auth.Use(middleware.JWTAuthMiddleware(), middleware.QueryLimit)
 	auth.POST("/refresh", handler.RefreshToken)

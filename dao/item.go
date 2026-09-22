@@ -31,6 +31,7 @@ func GetItemByID(id uint) (*model.Item, error) {
 	var item model.Item
 	err := db.Preload("Category").Preload("Author").First(&item, id).Error
 	if err != nil {
+
 		return nil, err
 	}
 	return &item, nil
@@ -146,10 +147,10 @@ func ListItems(q ItemListQuery) ([]model.Item, int64, error) {
 		if len(q.Statuses) > 0 {
 			tx = tx.Where("status IN ?", q.Statuses)
 		}
-		if q.StartTime != nil {
+		if q.StartTime != nil && !q.StartTime.IsZero() {
 			tx = tx.Where("lost_time >= ?", *q.StartTime)
 		}
-		if q.EndTime != nil {
+		if q.EndTime != nil && !q.EndTime.IsZero() {
 			tx = tx.Where("lost_time <= ?", *q.EndTime)
 		}
 		return tx
