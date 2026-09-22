@@ -46,6 +46,7 @@ type ClaimCreateRequest struct {
 	ContactValue string   `json:"contactValue" binding:"max=100"`
 }
 type ClaimListRequest struct {
+	ItemID   uint     `form:"itemId"`
 	Status   []string `form:"status" binding:"omitempty,dive,oneof=pending approved rejected cancelled"`
 	Page     int      `form:"page"`
 	PageSize int      `form:"pageSize"`

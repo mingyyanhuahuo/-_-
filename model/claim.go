@@ -14,7 +14,7 @@ type Claim struct {
 	UserID        uint           `gorm:"index" json:"-"`
 	User          User           `gorm:"foreignKey:UserID" json:"applicant"`
 	ReviewerID    *uint          `json:"reviewerId"`
-	ClaimsReason  string         `gorm:"size:500" json:"claimReason"`
+	ClaimReason   string         `gorm:"size:500" json:"claimReason"`
 	ProofImages   datatypes.JSON `json:"proofImages"`
 	ContactType   string         `gorm:"size:16" json:"-"` // phone | wechat | qq | email
 	ContactValue  string         `gorm:"size:100" json:"contactValue"`
