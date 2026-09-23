@@ -203,6 +203,9 @@ func AuditClaim(role, remark, action string, reviewerID, claimID uint) error {
 	}
 	switch status {
 	case model.ClaimStatusApproved:
+		if claim.Item.Status != model.ItemStatusApproved {
+			return errcode.ErrInfoStatusNotAllow
+		}
 		others, err := dao.ApproveClaim(claimID, claim.ItemID, reviewerID, remark)
 		if err != nil {
 			logger.Logger.Error("审批认领申请失败", zap.String("role", role), zap.Uint("claimID", claimID), zap.Error(err))

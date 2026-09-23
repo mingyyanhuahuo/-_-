@@ -2,6 +2,7 @@ package dao
 
 import (
 	"lostfound/model"
+	"lostfound/pkg/errcode"
 	"time"
 
 	"gorm.io/gorm"
@@ -84,7 +85,7 @@ func ApproveClaim(claimID, itemID, reviewerID uint, remark string) ([]model.Clai
 	err := db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
 		if err := tx.Model(&model.Claim{}).
-			Where("id = ?", claimID).
+			Where("id = ? AND pending_status = ?", claimID, model.ClaimStatusPending).
 			Updates(map[string]any{
 				"pending_status": model.ClaimStatusApproved,
 				"reviewer_id":    reviewerID,
@@ -94,7 +95,7 @@ func ApproveClaim(claimID, itemID, reviewerID uint, remark string) ([]model.Clai
 			return err
 		}
 		if err := tx.Model(&model.Item{}).
-			Where("id = ?", itemID).
+			Where("id = ? AND pending_status = ?", itemID, model.ItemStatusPending).
 			Update("status", model.ItemStatusClaimed).Error; err != nil {
 			return err
 		}
@@ -133,6 +134,12 @@ func CountRecentClaims(userID, itemID uint, since time.Time) (int64, error) {
 }
 func CancelClaim(claimID, itemID uint) error {
 	return db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&model.Claim{}).
+			Where("id = ? AND pending_status = ?", claimID, model.ClaimStatusPending).
+			Update("pending_status", model.ClaimStatusCancelled)
+		if res.RowsAffected == 0 {
+			return errcode.ErrClaimReqHandled
+		}
 		if err := tx.Model(&model.Claim{}).
 			Where("id = ?", claimID).
 			Update("pending_status", model.ClaimStatusCancelled).Error; err != nil {
@@ -141,5 +148,16 @@ func CancelClaim(claimID, itemID uint) error {
 		return tx.Model(&model.Item{}).
 			Where("id = ? AND claim_count > 0", itemID).
 			UpdateColumn("claim_count", gorm.Expr("claim_count - ?", 1)).Error
+	})
+}
+
+func GenerateClaimWithCount(claim *model.Claim) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(claim).Error; err != nil {
+			return err
+		}
+		return tx.Model(&model.Item{}).
+			Where("id = ?", claim.ItemID).
+			UpdateColumn("claim_count", gorm.Expr("claim_count + ?", 1)).Error
 	})
 }

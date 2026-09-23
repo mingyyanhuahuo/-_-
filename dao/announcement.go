@@ -47,7 +47,7 @@ func ListAnnouncements(status string, publishedOnly bool, offset, limit int) ([]
 		return nil, 0, err
 	}
 	var announcements []model.Announcement
-	if err := builder().Order("is_top DESC, publish_at DESC").
+	if err := builder().Order("is_top DESC, publish_at DESC,id DESC").
 		Offset(offset).Limit(limit).Find(&announcements).Error; err != nil {
 		return nil, 0, err
 	}

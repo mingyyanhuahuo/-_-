@@ -16,7 +16,7 @@ import (
 )
 
 func GenerateClaim(userID uint, req *dto.ClaimCreateRequest) (*dto.ClaimStatusResponse, error) {
-	item, err := dao.GetItemByID(req.ItemID)
+	item, err := getItemOrFail(req.ItemID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +68,8 @@ func GenerateClaim(userID uint, req *dto.ClaimCreateRequest) (*dto.ClaimStatusRe
 		ContactValue:  contactValue,
 		PendingStatus: model.ClaimStatusPending,
 	}
-	if err := dao.GenerateClaim(claim); err != nil {
+	if err := dao.GenerateClaimWithCount(claim); err != nil {
 		logger.Logger.Error("创建认领申请失败", zap.Uint("itemID", req.ItemID), zap.Uint("userID", userID), zap.Error(err))
-		return nil, errcode.ErrInternalServer
-	}
-	if err := dao.IncrItemClaimCount(req.ItemID); err != nil {
-		logger.Logger.Error("增加物品认领申请数量失败", zap.Uint("itemID", req.ItemID), zap.Error(err))
 		return nil, errcode.ErrInternalServer
 	}
 	if err := dao.GenerateNotification([]model.Notification{{

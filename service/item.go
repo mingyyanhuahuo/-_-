@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var minLostTime = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+var minLostTime = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
 var publicItemStatus = []string{
 	model.ItemStatusApproved,
@@ -293,6 +293,7 @@ func UpdateItem(UserID, itemID uint, req *dto.ItemUpdateRequest) (*dto.ItemStatu
 		"status":        model.ItemStatusPending,
 		"reject_reason": "",
 		"review_time":   nil,
+		"close_remark":  "",
 	}
 	if req.Title != nil {
 		fields["title"] = *req.Title
