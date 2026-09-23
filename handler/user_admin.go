@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"strconv"
+
+	"lostfound/pkg/errcode"
 	"lostfound/pkg/logger"
 	"lostfound/pkg/response"
 	"lostfound/service"
@@ -34,4 +37,31 @@ func ListUsers(c *gin.Context) {
 	)
 
 	response.OK(c, result)
+}
+
+func GetUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("userId"), 10, 64)
+	if err != nil {
+		c.Error(errcode.ErrBadRequest)
+		return
+	}
+	result, err := service.GetUser(uint(userID))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response.OK(c, result)
+}
+
+func DeleteUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("userId"), 10, 64)
+	if err != nil {
+		c.Error(errcode.ErrBadRequest)
+		return
+	}
+	if err := service.DeleteUser(c.GetUint("id"), uint(userID)); err != nil {
+		c.Error(err)
+		return
+	}
+	response.OK(c, nil)
 }

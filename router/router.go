@@ -84,6 +84,8 @@ func InitRouter(r *gin.Engine) {
 		middleware.QueryLimit)
 	{
 		admin.GET("/users", handler.ListUsers)
+		admin.GET("/users/:userId", handler.GetUser)
+		admin.DELETE("/users/:userId", handler.DeleteUser)
 	}
 	/*
 		admin := api.Group("", middleware.RequireRoleMiddleware(model.RoleLfAdmin,model.RoleSysAdmin),

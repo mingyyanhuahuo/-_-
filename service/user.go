@@ -136,7 +136,9 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 	if err := dao.RevokeRefreshToken(tokenHash); err != nil {
 		return Response, err
 	}
-	if err := dao.CreateRefreshToken(Cliam.UserID, tokenHash, Cliam.ExpiresAt.Time); err != nil {
+
+	newTokenHash := hash.HashToken(refresh)
+	if err := dao.CreateRefreshToken(Cliam.UserID, newTokenHash, time.Now().Add(7*24*time.Hour)); err != nil {
 		return Response, err
 	}
 
