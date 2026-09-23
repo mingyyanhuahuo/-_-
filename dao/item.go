@@ -81,6 +81,7 @@ func GetItemTypeByID(id uint) (*model.ItemType, error) {
 	}
 	return &itemType, nil
 }
+
 func CountItemsByCategory(categoryID uint) (int64, error) {
 	var count int64
 	err := db.Model(&model.Item{}).Where("category_id = ?", categoryID).Count(&count).Error

@@ -131,12 +131,14 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 
 	ttl := time.Until(Cliam.ExpiresAt.Time)
 	if ttl > 0 {
-		_ = redisdb.AddRevokedToken(tokenHash, ttl) // Redis 挂时 fail-open,DB 已吊销
+		_ = redisdb.AddRevokedToken(tokenHash, ttl)
 	}
 	if err := dao.RevokeRefreshToken(tokenHash); err != nil {
 		return Response, err
 	}
-	if err := dao.CreateRefreshToken(Cliam.UserID, tokenHash, Cliam.ExpiresAt.Time); err != nil {
+
+	newTokenHash := hash.HashToken(refresh)
+	if err := dao.CreateRefreshToken(Cliam.UserID, newTokenHash, time.Now().Add(7*24*time.Hour)); err != nil {
 		return Response, err
 	}
 

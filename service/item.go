@@ -73,6 +73,7 @@ func checkImages(userID uint, urls []string) error {
 	}
 	return nil
 }
+
 func checkCategory(categoryID uint) error {
 	category, err := dao.GetItemTypeByID(categoryID)
 	if err != nil {
