@@ -65,6 +65,17 @@ func InitRouter(r *gin.Engine) {
 		root.DELETE("/categories/:categoryId", handler.DeleteCategory)
 	}
 
+	audit := api.Group("/admin/audit",
+		middleware.JWTAuthMiddleware(),
+		middleware.RequireAuthMiddleware(),
+		middleware.RequireRoleMiddleware(model.RoleLfAdmin, model.RoleSysAdmin),
+		middleware.QueryLimit)
+	{
+		audit.GET("/items", handler.ListAuditItems)
+		audit.PATCH("/items/:itemId", handler.AuditItem)
+		audit.GET("/claims", handler.ListAuditClaims)
+		audit.PATCH("/claims/:claimId", handler.AuditClaim)
+	}
 	/*
 		admin := api.Group("", middleware.RequireRoleMiddleware(model.RoleLfAdmin,model.RoleSysAdmin),
 		middleware.RequireAuthMiddleware())

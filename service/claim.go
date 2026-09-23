@@ -62,7 +62,7 @@ func GenerateClaim(userID uint, req *dto.ClaimCreateRequest) (*dto.ClaimStatusRe
 	claim := &model.Claim{
 		ItemID:        req.ItemID,
 		UserID:        userID,
-		ClaimsReason:  req.ClaimReason,
+		ClaimReason:   req.ClaimReason,
 		ProofImages:   proofImages,
 		ContactType:   model.ContactTypePhone,
 		ContactValue:  contactValue,
@@ -112,7 +112,7 @@ func toClaimBrief(claim *model.Claim) dto.ClaimBrief {
 		ItemId:         claim.ItemID,
 		ItemTitle:      claim.Item.Title,
 		ItemCoverImage: coverImage,
-		ClaimReason:    claim.ClaimsReason,
+		ClaimReason:    claim.ClaimReason,
 		Status:         claim.PendingStatus,
 		Applicant: dto.UserBrief{
 			UserId:   claim.UserID,
