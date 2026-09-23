@@ -27,6 +27,7 @@ func InitRouter(r *gin.Engine) {
 	apiJWT.GET("/announcements/:announcementId", handler.GetAnnouncement)
 	apiJWT.GET("/items/:itemId", handler.GetItemDetail)
 	apiJWT.GET("/items", handler.ListItems)
+	apiJWT.GET("/categories", handler.ListCategories)
 
 	login := api.Group("",
 		middleware.JWTAuthMiddleware(),
@@ -58,6 +59,10 @@ func InitRouter(r *gin.Engine) {
 		root.PUT("/announcements/:announcementId", handler.UpdateAnnouncement)
 		root.PATCH("/announcements/:announcementId/publish", handler.ChangeAnnouncementStatus)
 		root.DELETE("/announcements/:announcementId", handler.DeleteAnnouncement)
+
+		root.POST("/categories", handler.CreateCategory)
+		root.PUT("/categories/:categoryId", handler.UpdateCategory)
+		root.DELETE("/categories/:categoryId", handler.DeleteCategory)
 	}
 
 	/*

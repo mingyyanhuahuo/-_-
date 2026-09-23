@@ -131,7 +131,7 @@ func RefreshToken(refreshToken string) (model.RefreshResponse, error) {
 
 	ttl := time.Until(Cliam.ExpiresAt.Time)
 	if ttl > 0 {
-		_ = redisdb.AddRevokedToken(tokenHash, ttl) // Redis 挂时 fail-open,DB 已吊销
+		_ = redisdb.AddRevokedToken(tokenHash, ttl)
 	}
 	if err := dao.RevokeRefreshToken(tokenHash); err != nil {
 		return Response, err

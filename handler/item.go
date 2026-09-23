@@ -67,6 +67,7 @@ func DeleteItem(c *gin.Context) {
 	}
 	response.OK(c, nil)
 }
+
 func ListItems(c *gin.Context) {
 	var req dto.ItemListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
