@@ -76,6 +76,15 @@ func InitRouter(r *gin.Engine) {
 		audit.GET("/claims", handler.ListAuditClaims)
 		audit.PATCH("/claims/:claimId", handler.AuditClaim)
 	}
+
+	admin := api.Group("/admin",
+		middleware.JWTAuthMiddleware(),
+		middleware.RequireAuthMiddleware(),
+		middleware.RequireRoleMiddleware(model.RoleSysAdmin),
+		middleware.QueryLimit)
+	{
+		admin.GET("/users", handler.ListUsers)
+	}
 	/*
 		admin := api.Group("", middleware.RequireRoleMiddleware(model.RoleLfAdmin,model.RoleSysAdmin),
 		middleware.RequireAuthMiddleware())

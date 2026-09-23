@@ -17,6 +17,11 @@ type PageMeta struct {
 	PageSize int   `json:"pageSize"`
 }
 
+type UserAdminList struct {
+	PageMeta
+	List []model.User `json:"list"`
+}
+
 type AnnouncementsList struct {
 	PageMeta
 	Announcements []model.Announcement `json:"list"`
