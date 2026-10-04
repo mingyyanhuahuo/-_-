@@ -86,6 +86,11 @@ func InitRouter(r *gin.Engine) {
 		admin.GET("/users", handler.ListUsers)
 		admin.GET("/users/:userId", handler.GetUser)
 		admin.DELETE("/users/:userId", handler.DeleteUser)
+
+		admin.GET("/stats/overview", handler.Overview)
+		admin.GET("/stats/category", handler.Category)
+		admin.GET("/stats/trend", handler.Trend)
+		admin.GET("/stats/claim-rate", handler.ClaimRate)
 	}
 	/*
 		admin := api.Group("", middleware.RequireRoleMiddleware(model.RoleLfAdmin,model.RoleSysAdmin),

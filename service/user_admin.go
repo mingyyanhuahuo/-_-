@@ -30,7 +30,6 @@ func ListUsers(role, keyword string, page, pageSize int) (*dto.UserAdminList, er
 	}, nil
 }
 
-// GetUser 获取用户详情(含发布数/认领数),仅 sys_admin 调用
 func GetUser(userID uint) (*dto.UserAdminDetail, error) {
 	user, err := dao.GetUserByID(userID)
 	if err != nil {
@@ -59,7 +58,6 @@ func GetUser(userID uint) (*dto.UserAdminDetail, error) {
 	}, nil
 }
 
-// DeleteUser 删除用户,不可删除自己。软删除 + 取消其待处理认领
 func DeleteUser(operatorID, targetID uint) error {
 	if operatorID == targetID {
 		return errcode.ErrForbidden
