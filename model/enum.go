@@ -70,6 +70,7 @@ const (
 	TargetCategory     = "category"
 	TargetAnnouncement = "announcement"
 	TargetFile         = "file"
+	TargetComment      = "comment"
 )
 
 // 通知类型

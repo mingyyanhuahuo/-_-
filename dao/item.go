@@ -171,4 +171,16 @@ func ListItems(q ItemListQuery) ([]model.Item, int64, error) {
 	return items, total, nil
 }
 
+func ListItemsForMatch(itemType string, excludeItemID uint) ([]model.Item, error) {
+	var items []model.Item
+	err := db.Model(&model.Item{}).
+		Where("type = ? AND id != ? AND status = ?", itemType, excludeItemID, model.ItemStatusApproved).
+		Preload("Category").Preload("Author").
+		Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 //__________________________________________pend-model

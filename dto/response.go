@@ -154,3 +154,27 @@ type AuditClaimsList struct {
 	PageMeta
 	List []AuditClaimBrief `json:"list"`
 }
+
+type CommentBrief struct {
+	CommentId  uint      `json:"commentId"`
+	ItemId     uint      `json:"itemId"`
+	Content    string    `json:"content"`
+	Author     UserBrief `json:"author"`
+	CreateTime time.Time `json:"createTime"`
+}
+
+type CommentList struct {
+	PageMeta
+	List []CommentBrief `json:"list"`
+}
+
+type NotificationList struct {
+	PageMeta
+	List []model.Notification `json:"list"`
+}
+
+type MatchItem struct {
+	ItemBrief
+	MatchScore  float64  `json:"matchScore"`
+	MatchReason []string `json:"matchReason"`
+}

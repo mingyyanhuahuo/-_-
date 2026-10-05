@@ -27,6 +27,7 @@ func InitRouter(r *gin.Engine) {
 	apiJWT.GET("/announcements/:announcementId", handler.GetAnnouncement)
 	apiJWT.GET("/items/:itemId", handler.GetItemDetail)
 	apiJWT.GET("/items", handler.ListItems)
+	apiJWT.GET("/items/:itemId/comments", handler.ListComments)
 	apiJWT.GET("/categories", handler.ListCategories)
 
 	login := api.Group("",
@@ -47,6 +48,14 @@ func InitRouter(r *gin.Engine) {
 		login.GET("/items/:itemId/claims", handler.ListItemClaims)
 		login.GET("/claims/:claimId", handler.GetClaimDetail)
 		login.DELETE("/claims/:claimId", handler.CancelClaim)
+
+		login.GET("/notifications", handler.ListNotifications)
+		login.GET("/items/:itemId/matches", handler.GetItemMatches)
+		login.POST("/items/:itemId/comments", handler.CreateComment)
+		login.DELETE("/items/:itemId/comments/:commentId", handler.DeleteComment)
+		login.POST("/items/:itemId/favorite", handler.AddFavorite)
+		login.DELETE("/items/:itemId/favorite", handler.RemoveFavorite)
+		login.GET("/favorites/mine", handler.ListFavorites)
 
 	}
 	root := api.Group("",

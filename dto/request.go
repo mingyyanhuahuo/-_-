@@ -67,3 +67,17 @@ type AnnouncementRequest struct {
 	IsTop     bool       `json:"isTop"`
 	PublishAt *time.Time `json:"publishAt"`
 }
+
+type CommentCreateRequest struct {
+	Content string `json:"content" binding:"required,min=1,max=500"`
+}
+
+type MatchRequest struct {
+	Limit int `form:"limit" binding:"omitempty,min=1,max=20"`
+}
+
+type NotificationListRequest struct {
+	Type     string `form:"type"`
+	Page     int    `form:"page"`
+	PageSize int    `form:"pageSize"`
+}
