@@ -14,12 +14,12 @@ func GenerateNotification(notisfictions []model.Notification) error {
 }
 
 func ListNotifications(userID uint, notifType string, offset, limit int) ([]model.Notification, int64, error) {
-	builder := func(tx *gorm.DB) *gorm.DB {
-		q := tx.Model(&model.Notification{}).Where("user_id = ?", userID)
+	builder := func(db *gorm.DB) *gorm.DB {
+		tx := db.Model(&model.Notification{}).Where("user_id = ?", userID)
 		if notifType != "" {
-			q = q.Where("type = ?", notifType)
+			tx = tx.Where("type = ?", notifType)
 		}
-		return q
+		return tx
 	}
 	var total int64
 	if err := builder(db).Count(&total).Error; err != nil {

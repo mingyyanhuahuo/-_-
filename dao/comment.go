@@ -7,8 +7,8 @@ import (
 )
 
 func ListComments(itemID uint, offset, limit int) ([]*model.Comment, int64, error) {
-	builder := func(tx *gorm.DB) *gorm.DB {
-		return tx.Model(&model.Comment{}).Where("item_id = ?", itemID)
+	builder := func(db *gorm.DB) *gorm.DB {
+		return db.Model(&model.Comment{}).Where("item_id = ?", itemID)
 	}
 	var total int64
 	if err := builder(db).Count(&total).Error; err != nil {

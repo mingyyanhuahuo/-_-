@@ -1,6 +1,7 @@
 logs/
 *.exe
 ma
+test/
 *.test
 config/config.yaml
 docs/
