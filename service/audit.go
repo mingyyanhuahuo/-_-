@@ -35,6 +35,7 @@ func toAuditItemBrief(item *model.Item) dto.AuditItemBrief {
 		Location:     item.Location,
 		LostTime:     item.LostTime,
 		Status:       item.Status,
+		ReviewBy:     item.ReviewBy,
 		Publisher: dto.UserBrief{
 			UserId:   item.AuthorID,
 			Nickname: item.Author.NickName,

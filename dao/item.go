@@ -183,4 +183,13 @@ func ListItemsForMatch(itemType string, excludeItemID uint) ([]model.Item, error
 	return items, nil
 }
 
-//__________________________________________pend-model
+func ListPendingAuditItems(limit int) ([]model.Item, error) {
+	var items []model.Item
+	err := db.Model(&model.Item{}).
+		Where("status = ? AND (review_by IS NULL OR review_by = ?)", model.ItemStatusPending, model.ReviewedByNone).
+		Order("id ASC").Limit(limit).Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}

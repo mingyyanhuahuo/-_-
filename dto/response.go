@@ -129,6 +129,7 @@ type AuditItemBrief struct {
 	Status       string    `json:"status"`
 	Publisher    UserBrief `json:"publisher"`
 	CreateTime   time.Time `json:"createTime"`
+	ReviewBy     string    `json:"reviewBy"`
 }
 type AuditItemsList struct {
 	PageMeta

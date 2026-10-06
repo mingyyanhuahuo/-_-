@@ -83,3 +83,10 @@ const (
 	NotifyCommentCreated = "comment_created"
 	NotifySystem         = "system"
 )
+
+// 审核者类型
+const (
+	ReviewedByNone  = "none"
+	ReviewedByAdmin = "admin"
+	ReviewedByAI    = "ai"
+)

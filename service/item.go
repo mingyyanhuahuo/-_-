@@ -302,6 +302,7 @@ func UpdateItem(UserID, itemID uint, req *dto.ItemUpdateRequest) (*dto.ItemStatu
 		"reject_reason": "",
 		"review_time":   nil,
 		"close_remark":  "",
+		"review_by":     model.ReviewedByNone,
 	}
 	if req.Title != nil {
 		fields["title"] = *req.Title
