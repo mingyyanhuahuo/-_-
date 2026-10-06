@@ -252,11 +252,18 @@ func GetItemDetail(userID, itemID uint, role string) (*dto.ItemDetail, error) {
 	if item.CloseRemark != "" {
 		closeRemark = &item.CloseRemark
 	}
+	category := item.Category
+	count, err := dao.CountItemsByCategory(category.ID)
+	if err != nil {
+		logger.Logger.Error("查询物品分类数量失败", zap.Uint("categoryId", category.ID), zap.Error(err))
+		return nil, errcode.ErrInternalServer
+	}
+	category.ItemCount = count
 	return &dto.ItemDetail{
 		ItemId:       item.ID,
 		Type:         item.Type,
 		Title:        item.Title,
-		Category:     item.Category,
+		Category:     category,
 		Description:  item.Description,
 		Location:     item.Location,
 		LostTime:     item.LostTime,

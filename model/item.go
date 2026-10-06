@@ -32,4 +32,5 @@ type Item struct {
 	CreatedAt    time.Time      `json:"createTime"`
 	UpdatedAt    time.Time      `json:"updateTime"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	ReviewBy     string         `gorm:"size:16;default:none" json:"-"` //none / admin / ai
 }

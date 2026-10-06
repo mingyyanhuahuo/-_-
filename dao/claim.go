@@ -95,7 +95,7 @@ func ApproveClaim(claimID, itemID, reviewerID uint, remark string) ([]model.Clai
 			return err
 		}
 		if err := tx.Model(&model.Item{}).
-			Where("id = ? AND pending_status = ?", itemID, model.ItemStatusPending).
+			Where("id = ? AND status = ?", itemID, model.ItemStatusApproved).
 			Update("status", model.ItemStatusClaimed).Error; err != nil {
 			return err
 		}
@@ -139,11 +139,6 @@ func CancelClaim(claimID, itemID uint) error {
 			Update("pending_status", model.ClaimStatusCancelled)
 		if res.RowsAffected == 0 {
 			return errcode.ErrClaimReqHandled
-		}
-		if err := tx.Model(&model.Claim{}).
-			Where("id = ?", claimID).
-			Update("pending_status", model.ClaimStatusCancelled).Error; err != nil {
-			return err
 		}
 		return tx.Model(&model.Item{}).
 			Where("id = ? AND claim_count > 0", itemID).

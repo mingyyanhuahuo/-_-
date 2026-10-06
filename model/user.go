@@ -21,10 +21,10 @@ type User struct {
 }
 
 type RegisterBody struct {
-	Username  string `json:"username" binding:"required,min=3,max=20"`
+	Username  string `json:"username" binding:"required,min=4,max=20"`
 	Password  string `json:"password" binding:"required,min=8,max=20"`
-	Nickname  string `json:"nickname" binding:"required,min=2,max=20"`
-	StudentNo string `json:"studentNo" binding:"required,len=8"`
+	Nickname  string `json:"nickname" binding:"required,min=1,max=20"`
+	StudentNo string `json:"studentNo" binding:"required,min=8,max=12,numeric"`
 	Phone     string `json:"phone" binding:"required,len=11"`
 	Email     string `json:"email" binding:"required,email"`
 }

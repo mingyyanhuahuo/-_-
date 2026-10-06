@@ -76,7 +76,7 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, "null")
+	response.OK(c, nil)
 }
 
 func GetMe(c *gin.Context) {
