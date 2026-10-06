@@ -45,6 +45,7 @@ func InitRouter(r *gin.Engine) {
 
 		login.POST("/claims", middleware.ClaimLimit, handler.GenerateClaim)
 		login.GET("/claims/mine", handler.ListMyClaims)
+		login.GET("/claims/received", handler.ListReceivedClaimsMine)
 		login.GET("/items/:itemId/claims", handler.ListItemClaims)
 		login.GET("/claims/:claimId", handler.GetClaimDetail)
 		login.DELETE("/claims/:claimId", handler.CancelClaim)

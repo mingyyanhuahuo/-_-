@@ -11,11 +11,12 @@ import (
 	"io"
 	"lostfound/dao"
 	"lostfound/model"
-	"lostfound/pkg/deepseek"
+	"lostfound/pkg/errcode/deepseek"
 	"lostfound/pkg/logger"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -100,6 +101,9 @@ func (*auditRejectTool) Call(item *model.Item, reason string) error {
 	}})
 }
 
+// auditInFlight 防止同一物品被并发重复审核（审核请求最长 60s，worker 每 5s 一轮）
+var auditInFlight sync.Map
+
 func StartAuditWorker() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -118,12 +122,14 @@ func StartAuditWorker() {
 			continue
 		}
 		for _, item := range items {
-			if err := auditItemByAI(item.ID); err != nil {
-				logger.Logger.Error("AI审核失败，转人工", zap.Uint("itemId", item.ID), zap.Error(err))
-				_ = dao.UpdateItem(item.ID, map[string]any{
-					"review_by": model.ReviewedByAI,
-				})
+			if _, loaded := auditInFlight.LoadOrStore(item.ID, struct{}{}); loaded {
+				continue
 			}
+			if err := auditItemByAI(item.ID); err != nil {
+				// 审核失败保留 review_by=none，下轮自动重试
+				logger.Logger.Error("AI审核失败，稍后重试", zap.Uint("itemId", item.ID), zap.Error(err))
+			}
+			auditInFlight.Delete(item.ID)
 		}
 	}
 }
@@ -136,11 +142,18 @@ func auditItemByAI(itemID uint) error {
 	if item.Status != model.ItemStatusPending || item.ReviewBy == model.ReviewedByAI {
 		return nil
 	}
+	img := auditImageDataURL(item)
 	msgs := []deepseek.Message{
 		{Role: "system", Text: auditSystemPrompt},
-		{Role: "user", Text: auditBuildText(item), Image: auditImageDataURL(item)},
+		{Role: "user", Text: auditBuildText(item), Image: img},
 	}
-	reply, err := deepseek.Chat(msgs)
+	var reply string
+	if img != "" {
+		// 带图走视觉模型，避免普通文本模型拒绝图片输入
+		reply, err = deepseek.ChatVision(msgs)
+	} else {
+		reply, err = deepseek.Chat(msgs)
+	}
 	if err != nil {
 		return err
 	}

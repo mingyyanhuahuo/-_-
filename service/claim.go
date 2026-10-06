@@ -211,6 +211,26 @@ func ListMyClaims(userID uint, req *dto.ClaimListRequest) (*dto.ClaimsListRep, e
 	}
 	return toClaimList(claims, total, page, pageSize), nil
 }
+
+// ListReceivedClaimsMine 列出当前用户收到（其发布的物品被认领）的认领申请
+func ListReceivedClaimsMine(userID uint, req *dto.ClaimListRequest) (*dto.ClaimsListRep, error) {
+	page, pageSize := normalizePageNum(req.Page, req.PageSize)
+	q := dao.ClaimListQuery{
+		ItemAuthorID: userID,
+		Offset:       (page - 1) * pageSize,
+		Limit:        pageSize,
+	}
+	if len(req.Status) > 0 {
+		q.Statuses = req.Status
+	}
+	claims, total, err := dao.ListClaim(q)
+	if err != nil {
+		logger.Logger.Error("查询收到的认领申请列表失败", zap.Uint("userID", userID), zap.Error(err))
+		return nil, errcode.ErrInternalServer
+	}
+	return toClaimList(claims, total, page, pageSize), nil
+}
+
 func ListReceivedClaims(userID, itemID uint, role string, req *dto.ClaimListRequest) (*dto.ClaimsListRep, error) {
 	item, err := dao.GetItemByID(itemID)
 	if err != nil {

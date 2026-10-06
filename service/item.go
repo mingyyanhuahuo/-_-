@@ -164,10 +164,10 @@ func toItemList(items []model.Item, total int64, page, pageSize int) *dto.ItemsL
 }
 func GenerateItem(userID uint, req *dto.ItemCreateRequest) (*dto.ItemStatusResponse, error) {
 
-	if req.LostTime.After(time.Now()) {
+	if req.LostTime.Time.After(time.Now()) {
 		return nil, errcode.ErrBadRequest
 	}
-	if req.LostTime.Before(minLostTime) {
+	if req.LostTime.Time.Before(minLostTime) {
 		return nil, errcode.ErrBadRequest
 	}
 	if err := checkCategory(req.CategoryId); err != nil {
@@ -189,7 +189,7 @@ func GenerateItem(userID uint, req *dto.ItemCreateRequest) (*dto.ItemStatusRespo
 		Description:  req.Description,
 		Location:     req.Location,
 		Images:       images,
-		LostTime:     req.LostTime,
+		LostTime:     req.LostTime.Time,
 		ContactType:  req.ContactType,
 		ContactValue: req.ContactValue,
 		Status:       model.ItemStatusPending,
@@ -314,13 +314,13 @@ func UpdateItem(UserID, itemID uint, req *dto.ItemUpdateRequest) (*dto.ItemStatu
 		fields["location"] = *req.Location
 	}
 	if req.LostTime != nil {
-		if req.LostTime.After(time.Now()) {
+		if req.LostTime.Time.After(time.Now()) {
 			return nil, errcode.ErrBadRequest
 		}
-		if req.LostTime.Before(minLostTime) {
+		if req.LostTime.Time.Before(minLostTime) {
 			return nil, errcode.ErrBadRequest
 		}
-		fields["lost_time"] = *req.LostTime
+		fields["lost_time"] = req.LostTime.Time
 	}
 	if req.Images != nil {
 		if err := checkImages(UserID, req.Images); err != nil {

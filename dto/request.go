@@ -1,17 +1,53 @@
 package dto
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+)
+
+// FlexTime 兼容 RFC3339（time.Time 默认）与前端 datetime-local（YYYY-MM-DDTHH:MM）等常见格式
+type FlexTime struct {
+	time.Time
+}
+
+func (t *FlexTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "" || s == "null" {
+		*t = FlexTime{}
+		return nil
+	}
+	for _, layout := range []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02T15:04",
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+	} {
+		if v, err := time.ParseInLocation(layout, s, time.Local); err == nil {
+			*t = FlexTime{Time: v}
+			return nil
+		}
+	}
+	return fmt.Errorf("无法解析时间: %s", s)
+}
+
+func (t FlexTime) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Time)
+}
 
 type ItemCreateRequest struct {
-	Type         string    `json:"type" binding:"required,oneof=lost found"`
-	Title        string    `json:"title" binding:"required,min=2,max=50"`
-	CategoryId   uint      `json:"categoryId" binding:"required"`
-	Description  string    `json:"description" binding:"max=1000"`
-	Location     string    `json:"location" binding:"required,min=2,max=100"`
-	LostTime     time.Time `json:"lostTime" binding:"required"`
-	Images       []string  `json:"images" binding:"max=5,dive,url"`
-	ContactType  string    `json:"contactType" binding:"required,oneof=phone wechat qq email"`
-	ContactValue string    `json:"contactValue" binding:"required,max=100"`
+	Type         string   `json:"type" binding:"required,oneof=lost found"`
+	Title        string   `json:"title" binding:"required,min=2,max=50"`
+	CategoryId   uint     `json:"categoryId" binding:"required"`
+	Description  string   `json:"description" binding:"max=1000"`
+	Location     string   `json:"location" binding:"required,min=2,max=100"`
+	LostTime     FlexTime `json:"lostTime" binding:"required"`
+	Images       []string `json:"images" binding:"max=5,dive,url"`
+	ContactType  string   `json:"contactType" binding:"required,oneof=phone wechat qq email"`
+	ContactValue string   `json:"contactValue" binding:"required,max=100"`
 }
 
 type ItemUpdateRequest struct {
@@ -19,7 +55,7 @@ type ItemUpdateRequest struct {
 	CategoryId   *uint      `json:"categoryId"`
 	Description  *string    `json:"description" binding:"omitempty,max=1000"`
 	Location     *string    `json:"location" binding:"omitempty,min=2,max=100"`
-	LostTime     *time.Time `json:"lostTime"`
+	LostTime     *FlexTime  `json:"lostTime"`
 	Images       []string   `json:"images" binding:"omitempty,max=5,dive,url"`
 	ContactType  *string    `json:"contactType" binding:"omitempty,oneof=phone wechat qq email"`
 	ContactValue *string    `json:"contactValue" binding:"omitempty,max=100"`
