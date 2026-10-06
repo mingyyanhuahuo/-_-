@@ -11,6 +11,9 @@ import (
 	"lostfound/pkg/redisdb"
 	"lostfound/router"
 	"lostfound/service"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -133,7 +136,29 @@ func main() {
 	r.Use(middleware.AccessLog())
 	r.Use(middleware.ErrorMiddleware())
 	router.InitRouter(r)
+
+	// 前端 SPA 静态资源托管
+	dist := "./dist"
+	r.Static("/assets", filepath.Join(dist, "assets"))
+	r.NoRoute(func(c *gin.Context) {
+		p := c.Request.URL.Path
+		if strings.HasPrefix(p, "/api") || strings.HasPrefix(p, "/uploads") {
+			c.JSON(404, gin.H{"code": 404, "msg": "not found", "timestamp": time.Now().Unix()})
+			return
+		}
+		rel := strings.TrimPrefix(p, "/")
+		if info, err := os.Stat(filepath.Join(dist, rel)); err == nil && !info.IsDir() {
+			c.File(filepath.Join(dist, rel))
+			return
+		}
+		c.File(filepath.Join(dist, "index.html"))
+	})
+
 	port := config.GetConfig().Server.Port
-	log.Printf("服务启动，监听端口: %s", port)
-	r.Run(":" + port)
+	certFile := config.GetConfig().SSL.CertFile
+	keyFile := config.GetConfig().SSL.KeyFile
+	log.Printf("服务启动，监听端口: %s (HTTPS)", port)
+	if err := r.RunTLS(":"+port, certFile, keyFile); err != nil {
+		log.Fatalf("服务启动失败: %v", err)
+	}
 }

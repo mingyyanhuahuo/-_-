@@ -13,6 +13,7 @@ type Config struct {
 	Redis    RedisConfig    `yaml:"redis"`
 	DeepSeek DeepSeekConfig `yaml:"deepseek"`
 	Upload   UploadConfig   `yaml:"upload"`
+	SSL      SSLConfig      `yaml:"ssl"`
 }
 type DeepSeekConfig struct {
 	ApiKey              string `mapstructure:"api_key"`
@@ -40,7 +41,10 @@ type RedisConfig struct {
 	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
 }
-
+type SSLConfig struct {
+	CertFile string `mapstructure:"cert_file"`
+	KeyFile  string `mapstructure:"key_file"`
+}
 type UploadConfig struct {
 	Dir     string `mapstructure:"dir"`
 	BaseUrl string `mapstructure:"base_url"`
