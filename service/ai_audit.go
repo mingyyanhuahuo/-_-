@@ -23,12 +23,12 @@ import (
 )
 
 const (
-	auditTickInterval = 5 * time.Second // 攒多久：扫描间隔
-	auditBatchSize    = 5               // 每轮最多捞几篇
+	auditTickInterval = 5 * time.Second
+	auditBatchSize    = 5
 
-	auditImageMaxSide = 768  // 喂给模型的最长边
-	auditImageQuality = 78   // 重编码质量
-	auditImageMaxPx   = 6000 // 解码前的尺寸上限，挡解压炸弹
+	auditImageMaxSide = 768
+	auditImageQuality = 78
+	auditImageMaxPx   = 6000
 )
 
 const auditSystemPrompt = `你是校园失物招领平台的发布内容审核员。平台只允许发布真实的失物/招领信息。
@@ -176,14 +176,24 @@ func auditParseToolCall(s string) (string, map[string]any, bool) {
 		return "", nil, false
 	}
 	var obj map[string]any
-	if err := json.Unmarshal([]byte(s[start:end+1]), &obj); err != nil {
-		return "", nil, false
+	raw := s[start : end+1]
+	if err := json.Unmarshal([]byte(raw), &obj); err != nil {
+		obj = nil
+		if err := json.Unmarshal([]byte(raw+"}"), &obj); err != nil {
+			return "", nil, false
+		}
 	}
 	tool, ok := obj["tool"].(string)
 	if !ok {
 		return "", nil, false
 	}
 	args, _ := obj["args"].(map[string]any)
+	if args == nil {
+
+		if str, ok := obj["args"].(string); ok {
+			args = map[string]any{"reason": str}
+		}
+	}
 	return tool, args, true
 }
 

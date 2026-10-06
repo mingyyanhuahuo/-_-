@@ -6,6 +6,7 @@ import (
 	"lostfound/dao"
 	"lostfound/middleware"
 	"lostfound/model"
+	"lostfound/pkg/deepseek"
 	"lostfound/pkg/jwtutil"
 	"lostfound/pkg/logger"
 	"lostfound/pkg/redisdb"
@@ -122,6 +123,9 @@ func main() {
 	redisdb.InitRedis()
 	go startViewSync()
 	go startFileClean()
+	dfcg := config.GetConfig().DeepSeek
+	deepseek.Init(dfcg.ApiKey, dfcg.BaseUrl, dfcg.ModelFlash)
+	go service.StartAuditWorker()
 	if err := jwtutil.Init(config.GetConfig().JWT.Secret); err != nil {
 		log.Fatalf("JWT初始化失败: %v", err)
 	}
