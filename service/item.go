@@ -370,13 +370,22 @@ func DeleteItem(userID, itemID uint, role string) error {
 }
 func ListItems(role string, req *dto.ItemListRequest) (*dto.ItemsList, error) {
 	page, pageSize := normalizePageNum(req.Page, req.PageSize)
+	var startTime, endTime *time.Time
+	if req.StartTime != nil {
+		t := req.StartTime.Time
+		startTime = &t
+	}
+	if req.EndTime != nil {
+		t := req.EndTime.Time
+		endTime = &t
+	}
 	q := dao.ItemListQuery{
 		ItemType:   req.Type,
 		CategoryID: req.CategoryId,
 		Keyword:    req.Keyword,
 		Location:   req.Location,
-		StartTime:  req.StartTime,
-		EndTime:    req.EndTime,
+		StartTime:  startTime,
+		EndTime:    endTime,
 		SortBy:     req.SortBy,
 		SortOrder:  req.SortOrder,
 		Offset:     (page - 1) * pageSize,

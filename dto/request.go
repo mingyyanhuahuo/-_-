@@ -12,9 +12,8 @@ type FlexTime struct {
 	time.Time
 }
 
-func (t *FlexTime) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), `"`)
-	if s == "" || s == "null" {
+func (t *FlexTime) parse(s string) error {
+	if s == "" {
 		*t = FlexTime{}
 		return nil
 	}
@@ -34,6 +33,20 @@ func (t *FlexTime) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("无法解析时间: %s", s)
 }
 
+func (t *FlexTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "null" {
+		*t = FlexTime{}
+		return nil
+	}
+	return t.parse(s)
+}
+
+// UnmarshalText 兼容 gin form 绑定（query 参数中的 datetime-local 格式）
+func (t *FlexTime) UnmarshalText(b []byte) error {
+	return t.parse(string(b))
+}
+
 func (t FlexTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Time)
 }
@@ -51,28 +64,28 @@ type ItemCreateRequest struct {
 }
 
 type ItemUpdateRequest struct {
-	Title        *string    `json:"title" binding:"omitempty,min=2,max=50"`
-	CategoryId   *uint      `json:"categoryId"`
-	Description  *string    `json:"description" binding:"omitempty,max=1000"`
-	Location     *string    `json:"location" binding:"omitempty,min=2,max=100"`
-	LostTime     *FlexTime  `json:"lostTime"`
-	Images       []string   `json:"images" binding:"omitempty,max=5,dive,url"`
-	ContactType  *string    `json:"contactType" binding:"omitempty,oneof=phone wechat qq email"`
-	ContactValue *string    `json:"contactValue" binding:"omitempty,max=100"`
+	Title        *string   `json:"title" binding:"omitempty,min=2,max=50"`
+	CategoryId   *uint     `json:"categoryId"`
+	Description  *string   `json:"description" binding:"omitempty,max=1000"`
+	Location     *string   `json:"location" binding:"omitempty,min=2,max=100"`
+	LostTime     *FlexTime `json:"lostTime"`
+	Images       []string  `json:"images" binding:"omitempty,max=5,dive,url"`
+	ContactType  *string   `json:"contactType" binding:"omitempty,oneof=phone wechat qq email"`
+	ContactValue *string   `json:"contactValue" binding:"omitempty,max=100"`
 }
 
 type ItemListRequest struct {
-	Type       string     `form:"type" binding:"omitempty,oneof=lost found"`
-	CategoryId uint       `form:"categoryId"`
-	Keyword    string     `form:"keyword" binding:"max=50"`
-	Location   string     `form:"location"`
-	Status     string     `form:"status" binding:"omitempty,oneof=pending approved rejected claimed closed"`
-	StartTime  *time.Time `form:"startTime" time_format:"2006-01-02T15:04:05Z07:00"`
-	EndTime    *time.Time `form:"endTime" time_format:"2006-01-02T15:04:05Z07:00"`
-	SortBy     string     `form:"sortBy" binding:"omitempty,oneof=createTime lostTime"`
-	SortOrder  string     `form:"sortOrder" binding:"omitempty,oneof=asc desc"`
-	Page       int        `form:"page"`
-	PageSize   int        `form:"pageSize"`
+	Type       string    `form:"type" binding:"omitempty,oneof=lost found"`
+	CategoryId uint      `form:"categoryId"`
+	Keyword    string    `form:"keyword" binding:"max=50"`
+	Location   string    `form:"location"`
+	Status     string    `form:"status" binding:"omitempty,oneof=pending approved rejected claimed closed"`
+	StartTime  *FlexTime `form:"startTime"`
+	EndTime    *FlexTime `form:"endTime"`
+	SortBy     string    `form:"sortBy" binding:"omitempty,oneof=createTime lostTime"`
+	SortOrder  string    `form:"sortOrder" binding:"omitempty,oneof=asc desc"`
+	Page       int       `form:"page"`
+	PageSize   int       `form:"pageSize"`
 }
 
 type ClaimCreateRequest struct {
