@@ -95,7 +95,7 @@ func UpdatePassword(c *gin.Context) {
 	var Body struct {
 		OldPwd       string `json:"oldPassword"`
 		NewPwd       string `json:"newPassword"`
-		RefreshToken string `json:"rfreshToken"`
+		RefreshToken string `json:"refreshToken"`
 	}
 	if err := c.ShouldBindJSON(&Body); err != nil {
 		BindError(c, err)

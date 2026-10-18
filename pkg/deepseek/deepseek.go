@@ -52,19 +52,23 @@ type chatResponse struct {
 }
 
 var (
-	apiKey  string
-	baseURL = "https://api.deepseek.com"
-	model   = "deepseek-v4-flash"
-	httpCl  = &http.Client{Timeout: chatTimeout}
+	apiKey      string
+	baseURL     = "https://api.deepseek.com"
+	model       = "deepseek-v4-flash"
+	visionModel string
+	httpCl      = &http.Client{Timeout: chatTimeout}
 )
 
-func Init(key, url, mdl string) {
+func Init(key, url, mdl, vision string) {
 	apiKey = key
 	if url != "" {
 		baseURL = url
 	}
 	if mdl != "" {
 		model = mdl
+	}
+	if vision != "" {
+		visionModel = vision
 	}
 }
 
@@ -73,11 +77,24 @@ func Enabled() bool {
 }
 
 func Chat(messages []Message) (string, error) {
+	return chat(messages, model)
+}
+
+// ChatVision 使用视觉模型（未配置时回退到默认模型）
+func ChatVision(messages []Message) (string, error) {
+	mdl := visionModel
+	if mdl == "" {
+		mdl = model
+	}
+	return chat(messages, mdl)
+}
+
+func chat(messages []Message, mdl string) (string, error) {
 	if !Enabled() {
 		return "", errors.New("DeepSeek API 未配置")
 	}
 	body, err := json.Marshal(chatRequest{
-		Model:    model,
+		Model:    mdl,
 		Messages: messages,
 	})
 	if err != nil {

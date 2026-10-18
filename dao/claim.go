@@ -9,11 +9,12 @@ import (
 )
 
 type ClaimListQuery struct {
-	UserID   uint
-	ItemID   uint
-	Statuses []string
-	Offset   int
-	Limit    int
+	UserID        uint
+	ItemID        uint
+	ItemAuthorID  uint
+	Statuses      []string
+	Offset        int
+	Limit         int
 }
 
 func GenerateClaim(claim *model.Claim) error {
@@ -60,6 +61,10 @@ func ListClaim(query ClaimListQuery) ([]*model.Claim, int64, error) {
 		}
 		if query.ItemID != 0 {
 			tx = tx.Where("item_id = ?", query.ItemID)
+		}
+		if query.ItemAuthorID != 0 {
+			tx = tx.Where("item_id IN (?)",
+				db.Model(&model.Item{}).Select("id").Where("author_id = ?", query.ItemAuthorID))
 		}
 		if len(query.Statuses) > 0 {
 			tx = tx.Where("pending_status IN ?", query.Statuses)

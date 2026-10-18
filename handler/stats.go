@@ -56,8 +56,8 @@ func Trend(c *gin.Context) {
 
 func ClaimRate(c *gin.Context) {
 	var Body struct {
-		StartTime string `form:"startTime" binding:"required,datetime=2006-01-02"`
-		EndTime   string `form:"endTime" binding:"required,datetime=2006-01-02"`
+		StartTime string `form:"startTime" binding:"omitempty,datetime=2006-01-02"`
+		EndTime   string `form:"endTime" binding:"omitempty,datetime=2006-01-02"`
 	}
 	if err := c.ShouldBindQuery(&Body); err != nil {
 		BindError(c, err)

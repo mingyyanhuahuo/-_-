@@ -1,7 +1,9 @@
 logs/
 *.exe
 ma
+release/
 test/
+release/*.gz
 *.test
 *.pem
 dist/

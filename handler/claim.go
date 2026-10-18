@@ -80,3 +80,17 @@ func ListItemClaims(c *gin.Context) {
 	}
 	response.OK(c, result)
 }
+
+func ListReceivedClaimsMine(c *gin.Context) {
+	var req dto.ClaimListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		BindError(c, err)
+		return
+	}
+	result, err := service.ListReceivedClaimsMine(c.GetUint("id"), &req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response.OK(c, result)
+}

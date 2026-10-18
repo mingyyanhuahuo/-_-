@@ -1,6 +1,8 @@
 package jwtutil
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"lostfound/pkg/redisdb"
 	"time"
@@ -32,12 +34,23 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// randomJTI 生成随机 jti（JWT ID），保证同用户在同一秒内多次签发 token 也互不相同，
+// 避免 refresh 轮换时并发插入相同的 token_hash 触发唯一索引冲突
+func randomJTI() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return time.Now().Format("150405.000000000")
+	}
+	return hex.EncodeToString(b)
+}
+
 func GenerateAccessToken(userID uint, role string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Role:   role,
 		Type:   "access",
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        randomJTI(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)), // 设置过期时间为2小时
 			IssuedAt:  jwt.NewNumericDate(time.Now()),                    // 设置签发时间为当前时间
 		},
@@ -52,6 +65,7 @@ func GenerateRefreshToken(userID uint, role string) (string, error) {
 		Role:   role,
 		Type:   "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        randomJTI(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 设置过期时间为7天
 			IssuedAt:  jwt.NewNumericDate(time.Now()),                         // 设置签发时间为当前时间
 		},

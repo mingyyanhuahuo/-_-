@@ -5,6 +5,7 @@ import (
 	"lostfound/model"
 	"lostfound/pkg/errcode"
 	"lostfound/pkg/logger"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -49,6 +50,13 @@ func Trend(days int) ([]model.TrendResponse, error) {
 
 func ClaimRate(startTime string, endTime string) (model.ClaimRateResponse, error) {
 	var CR model.ClaimRateResponse
+	// 未传时间范围时默认统计最近 30 天
+	if startTime == "" {
+		startTime = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	}
+	if endTime == "" {
+		endTime = time.Now().Format("2006-01-02")
+	}
 	if err := dao.ClaimRate(&CR, startTime, endTime); err != nil {
 		logger.Logger.Error("查询认领率失败", zap.Error(err))
 		return CR, errcode.ErrInternalServer
